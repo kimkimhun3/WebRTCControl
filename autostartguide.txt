@@ -1,0 +1,291 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                  INTEGRATING WITH YOUR EXISTING AUTOSTART.SH                   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+📋 YOUR CURRENT AUTOSTART.SH
+═══════════════════════════════════════════════════════════════════════════════
+
+Your existing autostart.sh handles:
+   ✓ Apache2 web server setup
+   ✓ API keys copying
+   ✓ PHP initialization
+   ✓ File permissions
+
+Location: /media/card/autostart.sh (presumably)
+
+
+🎯 RECOMMENDED APPROACH: MODULAR SCRIPTS
+═══════════════════════════════════════════════════════════════════════════════
+
+Keep scripts separate and organized:
+
+/media/card/
+├── autostart.sh                    ← Your main boot script (updated)
+│
+└── WebRTCControl/
+    ├── start_webrtccontrol.sh      ← NEW: Starts WebControlServer
+    ├── stop_webrtccontrol.sh       ← NEW: Stops WebControlServer
+    ├── WebControlServer            ← The control server binary
+    ├── StreamingProgram            ← The streaming server binary
+    ├── turnserver
+    ├── temp.conf
+    └── control-panel.html
+
+
+📝 FILES PROVIDED
+═══════════════════════════════════════════════════════════════════════════════
+
+1. start_webrtccontrol.sh
+   ───────────────────────
+   • Starts WebControlServer
+   • Saves PID to /tmp/webcontrol.pid
+   • Checks if startup was successful
+   • Displays status message
+
+2. stop_webrtccontrol.sh
+   ──────────────────────
+   • Stops WebControlServer gracefully
+   • Cleans up PID file
+   • Forces kill if necessary
+
+3. autostart_merged.sh
+   ───────────────────
+   • Your existing Apache/PHP startup
+   • PLUS WebRTC Control Server startup
+   • Ready to replace your current autostart.sh
+
+
+🔧 INSTALLATION STEPS
+═══════════════════════════════════════════════════════════════════════════════
+
+Step 1: Backup your current autostart.sh
+─────────────────────────────────────────
+   cp /media/card/autostart.sh /media/card/autostart.sh.backup
+
+Step 2: Copy the new scripts
+─────────────────────────────
+   # Copy to WebRTCControl folder:
+   cp start_webrtccontrol.sh /media/card/WebRTCControl/
+   cp stop_webrtccontrol.sh /media/card/WebRTCControl/
+   
+   # Make them executable:
+   chmod +x /media/card/WebRTCControl/start_webrtccontrol.sh
+   chmod +x /media/card/WebRTCControl/stop_webrtccontrol.sh
+
+Step 3: Update your main autostart.sh
+──────────────────────────────────────
+   Option A - Use the merged version:
+      cp autostart_merged.sh /media/card/autostart.sh
+      chmod +x /media/card/autostart.sh
+   
+   Option B - Manually add to your existing file:
+      nano /media/card/autostart.sh
+      
+      # Add these lines at the END (before "echo autostart.sh Complete"):
+      
+      if [ -f "$SD_PATH/WebRTCControl/start_webrtccontrol.sh" ]; then
+          echo "Starting WebRTC Control Server..."
+          sh $SD_PATH/WebRTCControl/start_webrtccontrol.sh
+      else
+          echo "WARNING: WebRTC Control Server startup script not found"
+      fi
+
+Step 4: Test the startup script
+────────────────────────────────
+   # Test manually before rebooting:
+   sh /media/card/WebRTCControl/start_webrtccontrol.sh
+   
+   # Check if it's running:
+   ps aux | grep WebControlServer
+   
+   # Access control panel:
+   # Open browser: http://YOUR_IP:8080/
+
+Step 5: Reboot to test autostart
+─────────────────────────────────
+   reboot
+   
+   # After boot, check:
+   ps aux | grep WebControlServer
+   cat /tmp/webcontrol.pid
+
+
+📂 FINAL FOLDER STRUCTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+/media/card/
+│
+├── autostart.sh                       ← Your updated main boot script
+├── autostart.sh.backup                ← Your original (backup)
+│
+├── web/                               ← Your existing web files
+│   └── initialize.php
+│
+├── *.pem                              ← Your API keys
+│
+└── WebRTCControl/                     ← WebRTC control system
+    ├── start_webrtccontrol.sh         ← Start script
+    ├── stop_webrtccontrol.sh          ← Stop script
+    ├── WebControlServer               ← Control server (compiled)
+    ├── StreamingProgram               ← Streaming server (compiled)
+    ├── turnserver                     ← TURN server
+    ├── temp.conf                      ← TURN config
+    └── control-panel.html             ← Web interface
+
+
+🚀 STARTUP SEQUENCE (AFTER INTEGRATION)
+═══════════════════════════════════════════════════════════════════════════════
+
+BOOT
+ │
+ └─► /media/card/autostart.sh runs
+      │
+      ├─► 1. Apache2 setup
+      │    ├─► Copy API keys
+      │    ├─► Set permissions
+      │    └─► Restart Apache
+      │
+      ├─► 2. PHP initialization
+      │    └─► Run initialize.php
+      │
+      ├─► 3. Apache restart
+      │
+      └─► 4. WebRTC Control Server startup (NEW!)
+           └─► Calls start_webrtccontrol.sh
+                │
+                ├─► Changes to /media/card/WebRTCControl
+                ├─► Starts ./WebControlServer
+                ├─► Saves PID to /tmp/webcontrol.pid
+                └─► WebControlServer running on port 8080
+
+
+🔍 VERIFICATION
+═══════════════════════════════════════════════════════════════════════════════
+
+After boot, check if everything is running:
+
+1. Check Apache:
+   ─────────────
+   ps aux | grep apache
+   curl http://localhost/
+
+2. Check WebRTC Control Server:
+   ────────────────────────────
+   ps aux | grep WebControlServer
+   cat /tmp/webcontrol.pid
+   curl http://localhost:8080/api/status
+
+3. Access control panel:
+   ─────────────────────
+   Browser: http://YOUR_IP:8080/
+
+
+🛑 STOPPING THE WEBRTC CONTROL SERVER
+═══════════════════════════════════════════════════════════════════════════════
+
+Manual stop:
+   sh /media/card/WebRTCControl/stop_webrtccontrol.sh
+
+Or direct kill:
+   kill $(cat /tmp/webcontrol.pid)
+
+
+🔄 RESTARTING WEBRTC CONTROL SERVER
+═══════════════════════════════════════════════════════════════════════════════
+
+   # Stop it
+   sh /media/card/WebRTCControl/stop_webrtccontrol.sh
+   
+   # Start it again
+   sh /media/card/WebRTCControl/start_webrtccontrol.sh
+
+
+⚠️ IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ Scripts use /bin/sh (not bash) - compatible with embedded systems
+✅ No dependencies on bash-specific features
+✅ Minimal resource usage
+✅ Error checking included
+✅ PID file management for easy process control
+
+⚠️ Port 8080 must be available:
+   • If Apache uses port 8080, change WebControlServer to different port
+   • Or change Apache to different port
+   • Current setup assumes Apache uses port 80 (default)
+
+⚠️ Make sure WebControlServer is executable:
+   chmod +x /media/card/WebRTCControl/WebControlServer
+
+
+🎯 ALTERNATIVE: SIMPLE INLINE ADDITION
+═══════════════════════════════════════════════════════════════════════════════
+
+If you don't want separate scripts, add directly to your autostart.sh:
+
+   #!/bin/sh
+   SD_PATH=/media/card
+   
+   # ... your existing Apache/PHP code ...
+   
+   echo "Apache/PHP startup complete!"
+   
+   # Start WebRTC Control Server
+   cd $SD_PATH/WebRTCControl
+   ./WebControlServer &
+   echo $! > /tmp/webcontrol.pid
+   echo "WebRTC Control Server started (PID: $(cat /tmp/webcontrol.pid))"
+   
+   echo "autostart.sh Complete !!"
+
+
+📊 TESTING CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+Before rebooting:
+   ☐ Backup original autostart.sh
+   ☐ Copy scripts to correct locations
+   ☐ Make scripts executable (chmod +x)
+   ☐ Test start script manually
+   ☐ Verify control panel accessible
+   ☐ Test stop script
+
+After rebooting:
+   ☐ Check if WebControlServer is running (ps aux)
+   ☐ Check PID file exists (/tmp/webcontrol.pid)
+   ☐ Access control panel (http://IP:8080/)
+   ☐ Test starting streaming
+   ☐ Test stopping streaming
+   ☐ Test TURN server control
+
+
+💡 TIPS
+═══════════════════════════════════════════════════════════════════════════════
+
+• Keep logs: Redirect output to log file
+  ./WebControlServer > /tmp/webcontrol.log 2>&1 &
+
+• Monitor startup: Check system logs
+  dmesg | grep -i webrtc
+
+• Debug mode: Run manually first before adding to autostart
+  cd /media/card/WebRTCControl
+  ./WebControlServer
+
+• Network check: Ensure network is up before starting
+  while ! ping -c 1 8.8.8.8; do sleep 1; done
+
+
+✅ YOU'RE READY!
+═══════════════════════════════════════════════════════════════════════════════
+
+Files to use:
+   1. start_webrtccontrol.sh     → /media/card/WebRTCControl/
+   2. stop_webrtccontrol.sh      → /media/card/WebRTCControl/
+   3. autostart_merged.sh        → /media/card/autostart.sh (or add manually)
+
+Your choice:
+   Option A: Use autostart_merged.sh (complete replacement)
+   Option B: Add the WebRTC section to your existing autostart.sh
+
+Both options work perfectly! 🚀
