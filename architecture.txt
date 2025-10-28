@@ -1,0 +1,191 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                    CORRECTED ARCHITECTURE - PORT SEPARATION                    ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         CLIENT (Web Browser)                                  │
+│                                                                               │
+│  ┌────────────────────────────────────────────────────────────────────┐     │
+│  │                    http://BOARD_IP:8080/                            │     │
+│  │                   (control-panel.html)                              │     │
+│  │                                                                      │     │
+│  │  ┌──────────────────────┐      ┌─────────────────────────────┐    │     │
+│  │  │   Control Section    │      │   Video Viewer Section       │    │     │
+│  │  │                      │      │                              │    │     │
+│  │  │  • Start/Stop Stream │      │  • WebRTC Video Display      │    │     │
+│  │  │  • Parameters        │      │  • Connect/Disconnect        │    │     │
+│  │  │  • TURN Control      │      │  • Stream Stats              │    │     │
+│  │  └──────────────────────┘      └─────────────────────────────┘    │     │
+│  │           │                                  │                      │     │
+│  │           │ REST API                         │ WebSocket            │     │
+│  │           │ HTTP                             │ ws://                │     │
+│  └───────────┼──────────────────────────────────┼──────────────────────┘     │
+└───────────────┼──────────────────────────────────┼────────────────────────────┘
+                │                                  │
+                │ Port 8080                        │ Port 8081
+                ▼                                  ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                    STREAMING SERVER (Your Board)                              │
+│                   /media/card/WebRTCControl/                                  │
+│                                                                                │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │         WebControlServer (ALWAYS RUNNING - Port 8080)                │   │
+│  │  ┌────────────────────────────────────────────────────────────┐     │   │
+│  │  │  • HTTP Server (serves control-panel.html)                 │     │   │
+│  │  │  • REST API endpoints:                                      │     │   │
+│  │  │    - GET  /api/status                                       │     │   │
+│  │  │    - POST /api/start                                        │     │   │
+│  │  │    - POST /api/stop                                         │     │   │
+│  │  │    - POST /api/turn/start                                   │     │   │
+│  │  │    - POST /api/turn/stop                                    │     │   │
+│  │  │  • Process Manager (spawn/kill child processes)             │     │   │
+│  │  └────────────────────────────────────────────────────────────┘     │   │
+│  └────────────┬────────────────────────────────┬──────────────────────────┘   │
+│               │ spawn/kill                     │ spawn/kill                    │
+│               │                                │                               │
+│  ┌────────────▼──────────────────────┐  ┌─────▼──────────────────────────┐  │
+│  │  StreamingProgram                 │  │    turnserver                   │  │
+│  │  (Started on demand)              │  │    (Started on demand)          │  │
+│  │  ┌──────────────────────────────┐ │  │    ┌──────────────────────────┐│  │
+│  │  │ • Port 8081 (WebSocket /ws) │ │  │    │ • Port 3478 (UDP+TCP)    ││  │
+│  │  │ • GStreamer Pipeline         │ │  │    │ • NAT Traversal          ││  │
+│  │  │ • Camera Capture             │ │  │    │ • Relay Service          ││  │
+│  │  │ • H264/H265 Encoding         │ │  │    │ • Uses temp.conf         ││  │
+│  │  │ • WebRTC Signaling           │ │  │    └──────────────────────────┘│  │
+│  │  │ • Handles Offer/Answer/ICE   │ │  └─────────────────────────────────┘  │
+│  │  └──────────────────────────────┘ │                                        │
+│  └───────────────────────────────────┘                                        │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                            PORT ASSIGNMENT                                     ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Port 8080:  WebControlServer (Always Running)
+            ├─► HTTP: Serves control-panel.html
+            └─► REST API: /api/* endpoints
+
+Port 8081:  StreamingProgram (On-Demand)
+            └─► WebSocket: /ws (WebRTC signaling)
+
+Port 3478:  TURN Server (On-Demand)
+            ├─► UDP: TURN relay
+            └─► TCP: TURN relay
+
+Port 5004:  UDP Sink (Optional - in StreamingProgram)
+            └─► Direct UDP streaming
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                         SIGNALING SERVER ANSWER                                ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Q: Where is the signaling server?
+A: Still inside StreamingProgram.cpp (your old VaddNewFlow1)
+
+Q: When does it start?
+A: When user clicks "Start Streaming" in the web interface
+   → WebControlServer spawns StreamingProgram
+   → StreamingProgram creates WebSocket server on port 8081
+   → Signaling server is now ready at ws://IP:8081/ws
+
+Q: How does control-panel.html connect to it?
+A: When user clicks "Connect to Stream":
+   → JavaScript opens WebSocket to ws://127.0.0.1:8081/ws
+   → StreamingProgram handles WebRTC negotiation
+   → Video stream is established
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                         FOLDER STRUCTURE (CONFIRMED)                           ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+/media/card/WebRTCControl/
+├── WebControlServer            ← Port 8080 (HTTP + REST API)
+├── StreamingProgram            ← Port 8081 (WebSocket signaling)
+├── turnserver                  ← Port 3478 (UDP + TCP)
+├── temp.conf                   ← TURN configuration
+├── control-panel.html          ← Web interface
+└── autostart.sh                ← Boot script (updated to use this path)
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                              WORKFLOW                                          ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+Step 1: BOOT
+────────────
+   autostart.sh runs
+        │
+        └─► WebControlServer starts (port 8080)
+                │
+                ├─► Listening for HTTP requests
+                ├─► REST API ready
+                └─► Waiting for commands
+
+Step 2: USER OPENS BROWSER
+───────────────────────────
+   http://BOARD_IP:8080/
+        │
+        └─► WebControlServer serves control-panel.html
+                │
+                └─► Control panel loads in browser
+
+Step 3: USER CLICKS "START STREAMING"
+──────────────────────────────────────
+   Browser → POST to /api/start (port 8080)
+        │
+        └─► WebControlServer receives request
+                │
+                ├─► Spawns StreamingProgram process
+                │
+                └─► StreamingProgram starts:
+                        │
+                        ├─► Opens /dev/video0
+                        ├─► Creates GStreamer pipeline
+                        ├─► Starts WebSocket server (port 8081)
+                        └─► Ready for WebRTC connections
+
+Step 4: USER CLICKS "CONNECT TO STREAM"
+────────────────────────────────────────
+   Browser → Opens WebSocket to ws://BOARD_IP:8081/ws
+        │
+        └─► StreamingProgram receives WebSocket connection
+                │
+                ├─► WebRTC negotiation (offer/answer/ICE)
+                ├─► Video track sent to browser
+                └─► Browser displays video
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                         KEY POINTS (UPDATED)                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+✅ WebControlServer runs on port 8080 (HTTP + REST API)
+✅ StreamingProgram runs on port 8081 (WebSocket signaling)
+✅ No port conflict - they can both run simultaneously
+✅ Signaling server is INSIDE StreamingProgram (your old VaddNewFlow1)
+✅ Signaling server starts when StreamingProgram starts
+✅ control-panel.html connects to ws://IP:8081/ws for video
+✅ control-panel.html connects to http://IP:8080/api/* for control
+✅ All files in /media/card/WebRTCControl/
+✅ autostart.sh updated to use correct path
+
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                         TURN SERVER NOTE                                       ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+You mentioned something about the TURN server - please let me know:
+   1. Does temp.conf need to be updated?
+   2. Is the TURN server path correct (./turnserver)?
+   3. Any specific TURN configuration you want to change?
+   4. Should TURN server be started automatically or on-demand?
+
+Current setup:
+   • TURN server: ./turnserver -c temp.conf
+   • Port: 3478 (UDP + TCP)
+   • Credentials: ab:ab
+   • URL: turn://ab:ab@192.168.25.90:3478
+   • Started on-demand when user clicks "Start TURN" button
