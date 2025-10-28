@@ -1,0 +1,1253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WebRTC Control Panel</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
+      padding: 16px; 
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    
+    .container { max-width: 1400px; margin: 0 auto; }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    h1 { font-size: clamp(18px, 4vw, 24px); color: #f1f5f9; }
+    
+    .status-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .badge { 
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px; 
+      border-radius: 6px; 
+      font-size: 11px; 
+      font-weight: 600; 
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .badge-running {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .badge-stopped {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .card {
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .card-title { 
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px; 
+      color: #60a5fa;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .grid { display: grid; gap: 16px; }
+    
+    @media (min-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .form-group { margin-bottom: 12px; }
+    
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.6);
+      color: #e2e8f0;
+      font-size: 13px;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    input:disabled, select:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+    }
+    
+    .btn-success:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+    }
+    
+    .btn-danger:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+    
+    .btn-secondary {
+      background: rgba(100, 116, 139, 0.2);
+      color: #cbd5e1;
+      border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+    
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-icon:hover:not(:disabled) {
+      background: rgba(59, 130, 246, 0.3);
+      transform: scale(1.1);
+    }
+    
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .video-container {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    
+    video {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 6px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 13px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .modal.active { display: flex; }
+    
+    .modal-content {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+    
+    .modal-close {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .modal-close:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+    
+    .stats-grid { display: grid; gap: 12px; }
+    
+    .stat-item {
+      background: rgba(15, 23, 42, 0.6);
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid #3b82f6;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    
+    .stat-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e2e8f0;
+      font-family: 'SF Mono', Monaco, monospace;
+      word-break: break-all;
+    }
+    
+    /* Loading Indicator */
+    .loading {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .loading.active { display: inline-flex; }
+    
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(251, 191, 36, 0.3);
+      border-top-color: #fbbf24;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .log-container {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+    }
+    
+    .log-line {
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: rgba(30, 41, 59, 0.4);
+      border-left: 2px solid transparent;
+      display: flex;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    
+    .log-time {
+      color: #64748b;
+      font-weight: 600;
+      min-width: 70px;
+    }
+    
+    .log-message {
+      flex: 1;
+      color: #e2e8f0;
+    }
+    
+    .log-line.log-success { border-left-color: #10b981; }
+    .log-line.log-error { border-left-color: #ef4444; }
+    .log-line.log-warning { border-left-color: #f59e0b; }
+    .log-line.log-info { border-left-color: #3b82f6; }
+
+    .divider {
+      height: 1px;
+      background: rgba(148, 163, 184, 0.2);
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🎥 WebRTC Control Panel</h1>
+      <div class="status-badges">
+        <span class="badge badge-stopped" id="serverStatus">⚫ Stream Stopped</span>
+        <span class="badge badge-stopped" id="turnStatus">⚫ TURN Stopped</span>
+      </div>
+    </div>
+    
+    <!-- Main Grid -->
+    <div class="grid grid-2">
+      <!-- Left Column -->
+      <div>
+        <!-- Stream Configuration -->
+        <div class="card">
+          <div class="card-title">⚙️ Stream Configuration</div>
+          
+          <!-- Video Settings -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Video Bitrate (kbps)</label>
+              <input type="number" id="bitrate" value="1000" min="100" max="20000" step="100">
+            </div>
+            <div class="form-group">
+              <label>FPS</label>
+              <input type="number" id="fps" value="15" min="1" max="60">
+            </div>
+            <div class="form-group">
+              <label>Video Codec</label>
+              <select id="codec">
+                <option value="h264">H.264</option>
+                <option value="h265" selected>H.265</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Width</label>
+              <input type="number" id="width" value="1920">
+            </div>
+            <div class="form-group">
+              <label>Height</label>
+              <input type="number" id="height" value="1080">
+            </div>
+          </div>
+          
+          <!-- Audio Settings (Optional) -->
+          <div class="divider"></div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Audio Codec (Optional)</label>
+              <select id="acodec">
+                <option value="">None (Video Only)</option>
+                <option value="aac">AAC</option>
+                <option value="opus" selected>Opus</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Audio Bitrate (kbps)</label>
+              <input type="number" id="abitrate" value="128" min="64" max="512" step="32">
+            </div>
+          </div>
+          
+          <!-- TURN/STUN Settings (Pipeline Parameters) -->
+          <div class="divider"></div>
+          
+          <div class="form-group">
+            <label>TURN URL (Pipeline)</label>
+            <input type="text" id="turnUrl" value="turn://ab:ab@192.168.25.90:3478">
+          </div>
+          
+          <div class="form-group">
+            <label>STUN URL (Pipeline)</label>
+            <input type="text" id="stunUrl" value="stun:stun.l.google.com:19302">
+          </div>
+          
+          <div class="controls">
+            <button class="btn-success" id="btnStartStream">🚀 Start Stream</button>
+            <button class="btn-danger" id="btnStopStream" disabled>🛑 Stop Stream</button>
+            <div class="loading" id="streamLoading">
+              <div class="spinner"></div>
+              <span id="streamLoadingText">Processing...</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- TURN Server Control -->
+        <div class="card">
+          <div class="card-title">🔄 TURN Server Control</div>
+          <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
+            Start/Stop the TURN server independently
+          </p>
+          
+          <div class="controls">
+            <button class="btn-success" id="btnStartTurn">▶️ Start TURN</button>
+            <button class="btn-danger" id="btnStopTurn" disabled>⏹️ Stop TURN</button>
+            <div class="loading" id="turnLoading">
+              <div class="spinner"></div>
+              <span id="turnLoadingText">Processing...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Column -->
+      <div>
+        <!-- Video Viewer -->
+        <div class="card">
+          <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📺 Live Stream</span>
+            <button class="btn-icon" id="btnShowStats" title="Show Statistics" disabled>
+              📊
+            </button>
+          </div>
+          
+          <div class="video-container">
+            <video id="video" autoplay playsinline muted></video>
+          </div>
+          
+          <div style="margin-top: 12px;">
+            <div class="checkbox-group">
+              <input type="checkbox" id="forceRelay">
+              <label for="forceRelay" style="margin: 0; cursor: pointer; text-transform: none; font-size: 12px;">
+                🔒 Force TURN Relay
+              </label>
+            </div>
+          </div>
+          
+          <div class="controls" style="margin-top: 12px;">
+            <button class="btn-primary" id="btnConnect">🔗 Connect</button>
+            <button class="btn-secondary" id="btnDisconnect" disabled>🔌 Disconnect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Activity Log -->
+    <div class="card">
+      <div class="card-title">📝 Activity Log</div>
+      <div class="log-container" id="logContainer"></div>
+    </div>
+  </div>
+  
+  <!-- Statistics Modal -->
+  <div class="modal" id="statsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">📊 Stream Statistics</div>
+        <div class="modal-close" id="closeStats">×</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">Video Codec</div>
+          <div class="stat-value" id="statCodec">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Audio Codec</div>
+          <div class="stat-value" id="statAudioCodec">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Resolution</div>
+          <div class="stat-value" id="statResolution">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Frame Rate</div>
+          <div class="stat-value" id="statFps">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Video Bitrate</div>
+          <div class="stat-value" id="statBitrate">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Audio Bitrate</div>
+          <div class="stat-value" id="statAudioBitrate">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Connection Type</div>
+          <div class="stat-value" id="statType">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Data Received</div>
+          <div class="stat-value" id="statDataReceived">0 MB</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Packets Lost</div>
+          <div class="stat-value" id="statPacketsLost">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Jitter</div>
+          <div class="stat-value" id="statJitter">0 ms</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function() {
+  'use strict';
+  
+  // Dynamic WebSocket URL based on current hostname
+  const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.hostname + ':8081/ws';
+  const API_BASE = '/api';
+  
+  // Elements
+  const $bitrate = document.getElementById('bitrate');
+  const $fps = document.getElementById('fps');
+  const $width = document.getElementById('width');
+  const $height = document.getElementById('height');
+  const $codec = document.getElementById('codec');
+  const $acodec = document.getElementById('acodec');
+  const $abitrate = document.getElementById('abitrate');
+  const $turnUrl = document.getElementById('turnUrl');
+  const $stunUrl = document.getElementById('stunUrl');
+  
+  const $btnStartStream = document.getElementById('btnStartStream');
+  const $btnStopStream = document.getElementById('btnStopStream');
+  const $streamLoading = document.getElementById('streamLoading');
+  const $streamLoadingText = document.getElementById('streamLoadingText');
+  
+  const $btnStartTurn = document.getElementById('btnStartTurn');
+  const $btnStopTurn = document.getElementById('btnStopTurn');
+  const $turnLoading = document.getElementById('turnLoading');
+  const $turnLoadingText = document.getElementById('turnLoadingText');
+  
+  const $serverStatus = document.getElementById('serverStatus');
+  const $turnStatus = document.getElementById('turnStatus');
+  
+  const $video = document.getElementById('video');
+  const $btnConnect = document.getElementById('btnConnect');
+  const $btnDisconnect = document.getElementById('btnDisconnect');
+  const $forceRelay = document.getElementById('forceRelay');
+  const $btnShowStats = document.getElementById('btnShowStats');
+  
+  const $statsModal = document.getElementById('statsModal');
+  const $closeStats = document.getElementById('closeStats');
+  
+  const $logContainer = document.getElementById('logContainer');
+  
+  const $statCodec = document.getElementById('statCodec');
+  const $statAudioCodec = document.getElementById('statAudioCodec');
+  const $statResolution = document.getElementById('statResolution');
+  const $statFps = document.getElementById('statFps');
+  const $statBitrate = document.getElementById('statBitrate');
+  const $statAudioBitrate = document.getElementById('statAudioBitrate');
+  const $statType = document.getElementById('statType');
+  const $statDataReceived = document.getElementById('statDataReceived');
+  const $statPacketsLost = document.getElementById('statPacketsLost');
+  const $statJitter = document.getElementById('statJitter');
+  
+  // WebRTC state
+  let ws = null;
+  let pc = null;
+  let remoteStream = null;
+  let statsInterval = null;
+  
+  // ICE Configuration
+  const ICE_CONFIG = {
+    iceServers: [
+      { urls: "stun:192.168.25.90:3478" },
+      {
+        urls: "turn:192.168.25.90:3478",
+        username: "ab",
+        credential: "ab",
+      },
+    ],
+    iceTransportPolicy: "all",
+  };
+  
+  // ============================================================================
+  // Utility Functions
+  // ============================================================================
+  
+  function log(message, type = 'info') {
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const line = document.createElement('div');
+    line.className = `log-line log-${type}`;
+    line.innerHTML = `<span class="log-time">${time}</span><span class="log-message">${message}</span>`;
+    $logContainer.appendChild(line);
+    $logContainer.scrollTop = $logContainer.scrollHeight;
+  }
+  
+  function setFormEnabled(enabled) {
+    $bitrate.disabled = !enabled;
+    $fps.disabled = !enabled;
+    $width.disabled = !enabled;
+    $height.disabled = !enabled;
+    $codec.disabled = !enabled;
+    $acodec.disabled = !enabled;
+    $abitrate.disabled = !enabled;
+    $turnUrl.disabled = !enabled;
+    $stunUrl.disabled = !enabled;
+  }
+  
+  // ============================================================================
+  // Server Control API
+  // ============================================================================
+  
+  async function fetchStatus() {
+    try {
+      const response = await fetch(`${API_BASE}/status`);
+      const data = await response.json();
+      
+      // Update streaming status
+      if (data.streaming_running) {
+        $serverStatus.textContent = '🟢 Stream Running';
+        $serverStatus.className = 'badge badge-running';
+        $btnStartStream.disabled = true;
+        $btnStopStream.disabled = false;
+        setFormEnabled(false);
+      } else {
+        $serverStatus.textContent = '⚫ Stream Stopped';
+        $serverStatus.className = 'badge badge-stopped';
+        $btnStartStream.disabled = false;
+        $btnStopStream.disabled = true;
+        setFormEnabled(true);
+      }
+      
+      // Update TURN status
+      if (data.turn_running) {
+        $turnStatus.textContent = '🟢 TURN Running';
+        $turnStatus.className = 'badge badge-running';
+        $btnStartTurn.disabled = true;
+        $btnStopTurn.disabled = false;
+      } else {
+        $turnStatus.textContent = '⚫ TURN Stopped';
+        $turnStatus.className = 'badge badge-stopped';
+        $btnStartTurn.disabled = false;
+        $btnStopTurn.disabled = true;
+      }
+      
+      // Update form values
+      if (data.parameters) {
+        $bitrate.value = data.parameters.bitrate;
+        $fps.value = data.parameters.fps;
+        $width.value = data.parameters.width;
+        $height.value = data.parameters.height;
+        $codec.value = data.parameters.codec;
+        $acodec.value = data.parameters.acodec || '';
+        $abitrate.value = data.parameters.abitrate || 128;
+        $turnUrl.value = data.parameters.turn_url;
+        $stunUrl.value = data.parameters.stun_url;
+      }
+    } catch (error) {
+      log('✗ Failed to fetch status: ' + error.message, 'error');
+    }
+  }
+  
+  async function startStreaming() {
+    const params = {
+      bitrate: parseInt($bitrate.value),
+      fps: parseInt($fps.value),
+      width: parseInt($width.value),
+      height: parseInt($height.value),
+      codec: $codec.value,
+      acodec: $acodec.value,
+      abitrate: parseInt($abitrate.value),
+      turn_url: $turnUrl.value,
+      stun_url: $stunUrl.value
+    };
+    
+    try {
+      $streamLoading.classList.add('active');
+      $streamLoadingText.textContent = 'Starting stream...';
+      $btnStartStream.disabled = true;
+      
+      const codecInfo = params.acodec ? `${params.codec.toUpperCase()} + ${params.acodec.toUpperCase()}` : params.codec.toUpperCase();
+      log(`🚀 Starting stream: ${codecInfo} @ ${params.bitrate}kbps...`, 'info');
+      
+      const response = await fetch(`${API_BASE}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        log('✓ Streaming server started', 'success');
+      } else {
+        log('✗ Failed to start streaming: ' + data.message, 'error');
+        $btnStartStream.disabled = false;
+      }
+      
+      setTimeout(() => {
+        $streamLoading.classList.remove('active');
+        fetchStatus();
+      }, 1000);
+    } catch (error) {
+      log('✗ Error starting streaming: ' + error.message, 'error');
+      $streamLoading.classList.remove('active');
+      $btnStartStream.disabled = false;
+    }
+  }
+  
+  async function stopStreaming() {
+    try {
+      $streamLoading.classList.add('active');
+      $streamLoadingText.textContent = 'Stopping stream...';
+      $btnStopStream.disabled = true;
+      
+      log('🛑 Stopping streaming server...', 'info');
+      const response = await fetch(`${API_BASE}/stop`, { method: 'POST' });
+      const data = await response.json();
+      
+      if (data.success) {
+        log('✓ Streaming server stopped', 'success');
+      } else {
+        log('✗ Failed to stop streaming: ' + data.message, 'error');
+      }
+      
+      setTimeout(() => {
+        $streamLoading.classList.remove('active');
+        fetchStatus();
+      }, 1000);
+    } catch (error) {
+      log('✗ Error stopping streaming: ' + error.message, 'error');
+      $streamLoading.classList.remove('active');
+    }
+  }
+  
+  async function startTurn() {
+    try {
+      $turnLoading.classList.add('active');
+      $turnLoadingText.textContent = 'Starting TURN...';
+      $btnStartTurn.disabled = true;
+      
+      log('▶️ Starting TURN server...', 'info');
+      const response = await fetch(`${API_BASE}/turn/start`, { method: 'POST' });
+      const data = await response.json();
+      
+      if (data.success) {
+        log('✓ TURN server started', 'success');
+      } else {
+        log('✗ Failed to start TURN: ' + data.message, 'error');
+        $btnStartTurn.disabled = false;
+      }
+      
+      setTimeout(() => {
+        $turnLoading.classList.remove('active');
+        fetchStatus();
+      }, 1000);
+    } catch (error) {
+      log('✗ Error starting TURN: ' + error.message, 'error');
+      $turnLoading.classList.remove('active');
+      $btnStartTurn.disabled = false;
+    }
+  }
+  
+  async function stopTurn() {
+    try {
+      $turnLoading.classList.add('active');
+      $turnLoadingText.textContent = 'Stopping TURN...';
+      $btnStopTurn.disabled = true;
+      
+      log('⏹️ Stopping TURN server...', 'info');
+      const response = await fetch(`${API_BASE}/turn/stop`, { method: 'POST' });
+      const data = await response.json();
+      
+      if (data.success) {
+        log('✓ TURN server stopped', 'success');
+      } else {
+        log('✗ Failed to stop TURN: ' + data.message, 'error');
+      }
+      
+      setTimeout(() => {
+        $turnLoading.classList.remove('active');
+        fetchStatus();
+      }, 1000);
+    } catch (error) {
+      log('✗ Error stopping TURN: ' + error.message, 'error');
+      $turnLoading.classList.remove('active');
+    }
+  }
+  
+  // ============================================================================
+  // WebRTC Viewer
+  // ============================================================================
+  
+  function parseSDPForStreamInfo(sdp) {
+    try {
+      const videoCodecMatch = sdp.match(/a=rtpmap:\d+ ([HV]\w+)/);
+      if (videoCodecMatch) {
+        $statCodec.textContent = videoCodecMatch[1];
+      }
+      
+      if (sdp.includes('OPUS') || sdp.includes('opus')) {
+        $statAudioCodec.textContent = 'Opus';
+      } else if (sdp.includes('MPEG4-GENERIC') || sdp.includes('mpeg4-generic')) {
+        $statAudioCodec.textContent = 'AAC';
+      }
+    } catch (e) {}
+  }
+  
+  function startStatsMonitoring() {
+    if (statsInterval) return;
+    
+    statsInterval = setInterval(async () => {
+      if (!pc) return;
+      
+      try {
+        const stats = await pc.getStats();
+        
+        stats.forEach(report => {
+          if (report.type === 'inbound-rtp' && report.kind === 'video') {
+            if (report.framesPerSecond) {
+              $statFps.textContent = Math.round(report.framesPerSecond);
+            }
+            
+            if (report.frameWidth && report.frameHeight) {
+              $statResolution.textContent = `${report.frameWidth}x${report.frameHeight}`;
+            }
+            
+            if (report.bytesReceived) {
+              const mb = (report.bytesReceived / (1024 * 1024)).toFixed(2);
+              $statDataReceived.textContent = `${mb} MB`;
+              
+              if (window.lastBytesReceived && window.lastTimestamp) {
+                const bytesDiff = report.bytesReceived - window.lastBytesReceived;
+                const timeDiff = report.timestamp - window.lastTimestamp;
+                const bitrate = Math.round((bytesDiff * 8) / (timeDiff / 1000) / 1000);
+                $statBitrate.textContent = `${bitrate} kbps`;
+              }
+              
+              window.lastBytesReceived = report.bytesReceived;
+              window.lastTimestamp = report.timestamp;
+            }
+            
+            if (report.packetsLost !== undefined) {
+              $statPacketsLost.textContent = report.packetsLost;
+            }
+            
+            if (report.jitter !== undefined) {
+              $statJitter.textContent = (report.jitter * 1000).toFixed(1) + ' ms';
+            }
+          }
+          
+          if (report.type === 'inbound-rtp' && report.kind === 'audio') {
+            if (report.bytesReceived) {
+              if (window.lastAudioBytesReceived && window.lastAudioTimestamp) {
+                const bytesDiff = report.bytesReceived - window.lastAudioBytesReceived;
+                const timeDiff = report.timestamp - window.lastAudioTimestamp;
+                const bitrate = Math.round((bytesDiff * 8) / (timeDiff / 1000) / 1000);
+                $statAudioBitrate.textContent = `${bitrate} kbps`;
+              }
+              
+              window.lastAudioBytesReceived = report.bytesReceived;
+              window.lastAudioTimestamp = report.timestamp;
+            }
+          }
+        });
+      } catch (e) {}
+    }, 1000);
+  }
+  
+  function setupPeerConnection() {
+    try {
+      let config = { ...ICE_CONFIG };
+      
+      if ($forceRelay && $forceRelay.checked) {
+        config.iceTransportPolicy = "relay";
+        log('🔒 Force Relay enabled', 'info');
+      } else {
+        log('🌐 ICE configured: STUN/TURN available', 'info');
+      }
+      
+      pc = new RTCPeerConnection(config);
+      log('✓ PeerConnection created', 'success');
+      
+      pc.ontrack = (ev) => {
+        log(`✓ Remote ${ev.track.kind} track received`, 'success');
+        
+        if (!remoteStream) {
+          remoteStream = new MediaStream();
+        }
+        
+        remoteStream.addTrack(ev.track);
+        $video.srcObject = remoteStream;
+        
+        $video.play().catch(e => log('⚠ Play error: ' + e.message, 'warning'));
+      };
+      
+      pc.onicecandidate = (ev) => {
+        if (!ev.candidate) {
+          log('✓ ICE gathering complete', 'success');
+          return;
+        }
+        
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ 
+            type: 'ice', 
+            data: {
+              candidate: ev.candidate.candidate,
+              sdpMLineIndex: ev.candidate.sdpMLineIndex,
+              sdpMid: ev.candidate.sdpMid
+            }
+          }));
+        }
+      };
+      
+      pc.onconnectionstatechange = async () => {
+        log('Connection state: ' + pc.connectionState, 'info');
+        
+        if (pc.connectionState === 'connected') {
+          log('✓ WebRTC connection established!', 'success');
+          $btnConnect.disabled = true;
+          $btnDisconnect.disabled = false;
+          $btnShowStats.disabled = false;
+          
+          const stats = await pc.getStats();
+          let type = 'unknown';
+          
+          stats.forEach(report => {
+            if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+              stats.forEach(r => {
+                if (r.id === report.localCandidateId) {
+                  type = r.candidateType;
+                }
+              });
+            }
+          });
+          
+          log(`📊 Connection type: ${type}`, 'info');
+          $statType.textContent = type || 'unknown';
+          
+          startStatsMonitoring();
+          
+        } else if (pc.connectionState === 'failed') {
+          log('✗ Connection failed', 'error');
+          $btnConnect.disabled = false;
+          $btnDisconnect.disabled = true;
+          $btnShowStats.disabled = true;
+          
+        } else if (pc.connectionState === 'disconnected') {
+          log('⚠ Connection disconnected', 'warning');
+          $btnConnect.disabled = false;
+          $btnDisconnect.disabled = true;
+          $btnShowStats.disabled = true;
+        }
+      };
+      
+      return pc;
+      
+    } catch (e) {
+      log('✗ Failed to create PeerConnection: ' + e.message, 'error');
+      return null;
+    }
+  }
+  
+  function cleanup() {
+    log('🧹 Cleaning up viewer...', 'info');
+    
+    if (pc) {
+      try { 
+        pc.ontrack = null;
+        pc.onicecandidate = null;
+        pc.onconnectionstatechange = null;
+        pc.close();
+      } catch (e) {}
+      pc = null;
+    }
+    
+    if (remoteStream) {
+      try {
+        remoteStream.getTracks().forEach(track => {
+          track.stop();
+          remoteStream.removeTrack(track);
+        });
+      } catch (e) {}
+      remoteStream = null;
+    }
+    
+    if (statsInterval) {
+      clearInterval(statsInterval);
+      statsInterval = null;
+    }
+    
+    $statCodec.textContent = '—';
+    $statAudioCodec.textContent = '—';
+    $statResolution.textContent = '—';
+    $statFps.textContent = '—';
+    $statBitrate.textContent = '—';
+    $statAudioBitrate.textContent = '—';
+    $statType.textContent = '—';
+    $statDataReceived.textContent = '0 MB';
+    $statPacketsLost.textContent = '0';
+    $statJitter.textContent = '0 ms';
+    
+    window.lastBytesReceived = null;
+    window.lastTimestamp = null;
+    window.lastAudioBytesReceived = null;
+    window.lastAudioTimestamp = null;
+    
+    try { 
+      $video.pause();
+      $video.srcObject = null;
+    } catch (e) {}
+    
+    if (ws) {
+      try { 
+        ws.onopen = null;
+        ws.onclose = null;
+        ws.onerror = null;
+        ws.onmessage = null;
+        ws.close(); 
+      } catch (e) {}
+      ws = null;
+    }
+  }
+  
+  function connectToStream() {
+    log('🎯 Connecting to stream...', 'info');
+    
+    cleanup();
+    
+    ws = new WebSocket(WS_URL);
+    
+    ws.onopen = () => {
+      log('✓ WebSocket connected', 'success');
+      
+      if (!setupPeerConnection()) {
+        log('✗ Failed to setup PeerConnection', 'error');
+        $btnConnect.disabled = false;
+        $btnDisconnect.disabled = true;
+        return;
+      }
+    };
+    
+    ws.onclose = () => {
+      log('WebSocket disconnected', 'warning');
+      $btnConnect.disabled = false;
+      $btnDisconnect.disabled = true;
+      $btnShowStats.disabled = true;
+    };
+    
+    ws.onerror = (err) => {
+      log('✗ WebSocket error: ' + err.type, 'error');
+    };
+    
+    ws.onmessage = async (ev) => {
+      let data = null;
+      try { 
+        data = JSON.parse(ev.data); 
+      } catch (e) { 
+        log('✗ Failed to parse message: ' + e.message, 'error');
+        return; 
+      }
+      
+      switch (data.type) {
+        case 'sdp':
+          if (data.data && data.data.type === 'offer') {
+            log('✓ Offer received from server', 'success');
+            
+            if (!pc) {
+              if (!setupPeerConnection()) {
+                log('✗ Failed to setup PeerConnection', 'error');
+                return;
+              }
+            }
+            
+            try {
+              if (data.data.sdp) {
+                parseSDPForStreamInfo(data.data.sdp);
+              }
+              
+              await pc.setRemoteDescription(new RTCSessionDescription(data.data));
+              log('✓ Remote description set', 'success');
+              
+              const answer = await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              log('✓ Answer created', 'success');
+              
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ 
+                  type: 'sdp', 
+                  data: answer
+                }));
+                log('→ Answer sent to server', 'info');
+              }
+              
+            } catch (e) {
+              log('✗ Negotiation error: ' + e.message, 'error');
+            }
+          }
+          break;
+          
+        case 'ice':
+          if (data.data && data.data.candidate) {
+            if (pc && pc.remoteDescription) {
+              try { 
+                await pc.addIceCandidate(new RTCIceCandidate({
+                  candidate: data.data.candidate,
+                  sdpMLineIndex: data.data.sdpMLineIndex,
+                  sdpMid: data.data.sdpMid
+                }));
+                log('✓ ICE candidate added', 'success');
+              } catch (e) {
+                log('⚠ Failed to add ICE: ' + e.message, 'warning');
+              }
+            }
+          }
+          break;
+      }
+    };
+  }
+  
+  // ============================================================================
+  // Event Listeners
+  // ============================================================================
+  
+  $btnStartStream.addEventListener('click', startStreaming);
+  $btnStopStream.addEventListener('click', stopStreaming);
+  $btnStartTurn.addEventListener('click', startTurn);
+  $btnStopTurn.addEventListener('click', stopTurn);
+  
+  $btnConnect.addEventListener('click', () => {
+    $btnConnect.disabled = true;
+    $btnDisconnect.disabled = true;
+    connectToStream();
+  });
+  
+  $btnDisconnect.addEventListener('click', () => {
+    cleanup();
+    $btnConnect.disabled = false;
+    $btnDisconnect.disabled = true;
+    $btnShowStats.disabled = true;
+  });
+  
+  $btnShowStats.addEventListener('click', () => {
+    $statsModal.classList.add('active');
+  });
+  
+  $closeStats.addEventListener('click', () => {
+    $statsModal.classList.remove('active');
+  });
+  
+  $statsModal.addEventListener('click', (e) => {
+    if (e.target === $statsModal) {
+      $statsModal.classList.remove('active');
+    }
+  });
+  
+  // ============================================================================
+  // Initialize
+  // ============================================================================
+  
+  log('📡 Control Panel Ready', 'success');
+  log('WebSocket: ' + WS_URL, 'info');
+  
+  fetchStatus();
+  setInterval(fetchStatus, 3000);
+})();
+</script>
+</body>
+</html>
