@@ -13,8 +13,8 @@
 #include <glib-unix.h>
 #endif
 
-#define SOUP_HTTP_PORT 8080
-#define STREAMING_WEBSOCKET_PORT 8080  // StreamingProgram will use same port for /ws
+#define SOUP_HTTP_PORT 8082
+#define STREAMING_WEBSOCKET_PORT 8082  // StreamingProgram will use same port for /ws
 
 // g++ WebControlServer.cpp -o WebControlServer `pkg-config --cflags --libs glib-2.0 libsoup-2.4 json-glib-1.0` -std=c++17
 
@@ -566,6 +566,223 @@ void api_turn_start_handler(G_GNUC_UNUSED SoupServer *soup_server,
     soup_message_set_status(message, SOUP_STATUS_OK);
 }
 
+// Helper function to trim whitespace
+std::string trim(const std::string& str) {
+    size_t first = str.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) return "";
+    size_t last = str.find_last_not_of(" \t\r\n");
+    return str.substr(first, (last - first + 1));
+}
+
+// REST API: Configuration handler (GET to load, POST to save)
+void api_config_handler(G_GNUC_UNUSED SoupServer *soup_server,
+                       SoupMessage *message, const char *path,
+                       G_GNUC_UNUSED GHashTable *query,
+                       G_GNUC_UNUSED SoupClientContext *client_context,
+                       G_GNUC_UNUSED gpointer user_data)
+{
+    g_print("→ Received %s request to /api/config\n", message->method);
+    
+    if (g_strcmp0(message->method, "GET") == 0) {
+        // ========== GET: Load configuration from file ==========
+        
+        g_print("  Processing GET request...\n");
+        
+        // Read config file
+        std::ifstream config_file("webrtc_parameters.conf");
+        JsonBuilder *builder = json_builder_new();
+        json_builder_begin_object(builder);
+        
+        if (config_file.is_open()) {
+            std::string line;
+            while (std::getline(config_file, line)) {
+                // Skip comments and empty lines
+                line = trim(line);
+                if (line.empty() || line[0] == '#') continue;
+                
+                // Parse key=value
+                size_t eq_pos = line.find('=');
+                if (eq_pos != std::string::npos) {
+                    std::string key = trim(line.substr(0, eq_pos));
+                    std::string value = trim(line.substr(eq_pos + 1));
+                    
+                    json_builder_set_member_name(builder, key.c_str());
+                    
+                    // Try to parse as integer
+                    char* endptr;
+                    long int_val = strtol(value.c_str(), &endptr, 10);
+                    if (*endptr == '\0' && endptr != value.c_str()) {
+                        json_builder_add_int_value(builder, int_val);
+                    } else {
+                        json_builder_add_string_value(builder, value.c_str());
+                    }
+                }
+            }
+            config_file.close();
+            g_print("✓ Configuration loaded from webrtc_parameters.conf\n");
+        } else {
+            // Return default values if file doesn't exist
+            g_print("⚠ Config file not found, returning defaults\n");
+            json_builder_set_member_name(builder, "codec");
+            json_builder_add_string_value(builder, "h264");
+            json_builder_set_member_name(builder, "bitrate");
+            json_builder_add_int_value(builder, 6000);
+            json_builder_set_member_name(builder, "width");
+            json_builder_add_int_value(builder, 1920);
+            json_builder_set_member_name(builder, "height");
+            json_builder_add_int_value(builder, 1080);
+            json_builder_set_member_name(builder, "fps");
+            json_builder_add_int_value(builder, 60);
+            json_builder_set_member_name(builder, "acodec");
+            json_builder_add_string_value(builder, "opus");
+            json_builder_set_member_name(builder, "abitrate");
+            json_builder_add_int_value(builder, 128);
+            json_builder_set_member_name(builder, "audio_device");
+            json_builder_add_string_value(builder, "hw:1,1");
+            json_builder_set_member_name(builder, "client_ip");
+            json_builder_add_string_value(builder, "192.168.25.90");
+            json_builder_set_member_name(builder, "client_port");
+            json_builder_add_int_value(builder, 5004);
+            json_builder_set_member_name(builder, "audio_port");
+            json_builder_add_int_value(builder, 5006);
+            json_builder_set_member_name(builder, "turn_url");
+            json_builder_add_string_value(builder, "turn://ab:ab@192.168.25.90:3478");
+            json_builder_set_member_name(builder, "stun_url");
+            json_builder_add_string_value(builder, "stun:stun.l.google.com:19302");
+        }
+        
+        json_builder_end_object(builder);
+        
+        JsonGenerator *generator = json_generator_new();
+        JsonNode *root = json_builder_get_root(builder);
+        json_generator_set_root(generator, root);
+        gchar *json_str = json_generator_to_data(generator, NULL);
+        
+        SoupBuffer *soup_buffer = soup_buffer_new(SOUP_MEMORY_COPY, json_str, strlen(json_str));
+        soup_message_headers_set_content_type(message->response_headers, "application/json", NULL);
+        soup_message_body_append_buffer(message->response_body, soup_buffer);
+        soup_buffer_free(soup_buffer);
+        
+        g_free(json_str);
+        json_node_free(root);
+        g_object_unref(generator);
+        g_object_unref(builder);
+        
+        soup_message_set_status(message, SOUP_STATUS_OK);
+        
+    } else if (g_strcmp0(message->method, "POST") == 0) {
+        // ========== POST: Save configuration to file ==========
+        
+        g_print("  Processing POST request...\n");
+        
+        // Parse JSON body
+        JsonParser *parser = json_parser_new();
+        GError *error = NULL;
+        
+        if (!json_parser_load_from_data(parser, message->request_body->data, 
+                                         message->request_body->length, &error)) {
+            g_printerr("Failed to parse JSON: %s\n", error->message);
+            g_error_free(error);
+            g_object_unref(parser);
+            soup_message_set_status(message, SOUP_STATUS_BAD_REQUEST);
+            return;
+        }
+        
+        JsonObject *root = json_node_get_object(json_parser_get_root(parser));
+        
+        // Write to config file
+        std::ofstream config_file("webrtc_parameters.conf");
+        
+        if (config_file.is_open()) {
+            config_file << "# WebRTC Streaming Parameters Configuration\n";
+            config_file << "# This file is automatically updated by the web control panel\n\n";
+            
+            config_file << "# Video Settings\n";
+            if (json_object_has_member(root, "codec")) {
+                config_file << "codec=" << json_object_get_string_member(root, "codec") << "\n";
+            }
+            if (json_object_has_member(root, "bitrate")) {
+                config_file << "bitrate=" << json_object_get_int_member(root, "bitrate") << "\n";
+            }
+            if (json_object_has_member(root, "width")) {
+                config_file << "width=" << json_object_get_int_member(root, "width") << "\n";
+            }
+            if (json_object_has_member(root, "height")) {
+                config_file << "height=" << json_object_get_int_member(root, "height") << "\n";
+            }
+            if (json_object_has_member(root, "fps")) {
+                config_file << "fps=" << json_object_get_int_member(root, "fps") << "\n";
+            }
+            
+            config_file << "\n# Audio Settings\n";
+            if (json_object_has_member(root, "acodec")) {
+                config_file << "acodec=" << json_object_get_string_member(root, "acodec") << "\n";
+            }
+            if (json_object_has_member(root, "abitrate")) {
+                config_file << "abitrate=" << json_object_get_int_member(root, "abitrate") << "\n";
+            }
+            if (json_object_has_member(root, "audio_device")) {
+                config_file << "audio_device=" << json_object_get_string_member(root, "audio_device") << "\n";
+            }
+            
+            config_file << "\n# Network Settings\n";
+            if (json_object_has_member(root, "client_ip")) {
+                config_file << "client_ip=" << json_object_get_string_member(root, "client_ip") << "\n";
+            }
+            if (json_object_has_member(root, "client_port")) {
+                config_file << "client_port=" << json_object_get_int_member(root, "client_port") << "\n";
+            }
+            if (json_object_has_member(root, "audio_port")) {
+                config_file << "audio_port=" << json_object_get_int_member(root, "audio_port") << "\n";
+            }
+            if (json_object_has_member(root, "turn_url")) {
+                config_file << "turn_url=" << json_object_get_string_member(root, "turn_url") << "\n";
+            }
+            if (json_object_has_member(root, "stun_url")) {
+                config_file << "stun_url=" << json_object_get_string_member(root, "stun_url") << "\n";
+            }
+            
+            config_file.close();
+            g_print("✓ Configuration saved to webrtc_parameters.conf\n");
+        } else {
+            g_printerr("✗ Failed to open config file for writing\n");
+        }
+        
+        g_object_unref(parser);
+        
+        // Return success response
+        JsonBuilder *builder = json_builder_new();
+        json_builder_begin_object(builder);
+        json_builder_set_member_name(builder, "success");
+        json_builder_add_boolean_value(builder, TRUE);
+        json_builder_set_member_name(builder, "message");
+        json_builder_add_string_value(builder, "Configuration saved");
+        json_builder_end_object(builder);
+        
+        JsonGenerator *generator = json_generator_new();
+        JsonNode *response_root = json_builder_get_root(builder);
+        json_generator_set_root(generator, response_root);
+        gchar *json_str = json_generator_to_data(generator, NULL);
+        
+        SoupBuffer *soup_buffer = soup_buffer_new(SOUP_MEMORY_COPY, json_str, strlen(json_str));
+        soup_message_headers_set_content_type(message->response_headers, "application/json", NULL);
+        soup_message_body_append_buffer(message->response_body, soup_buffer);
+        soup_buffer_free(soup_buffer);
+        
+        g_free(json_str);
+        json_node_free(response_root);
+        g_object_unref(generator);
+        g_object_unref(builder);
+        
+        soup_message_set_status(message, SOUP_STATUS_OK);
+        
+    } else {
+        // Method not allowed
+        g_print("✗ Method %s not allowed for /api/config\n", message->method);
+        soup_message_set_status(message, SOUP_STATUS_METHOD_NOT_ALLOWED);
+    }
+}
+
 // REST API: Stop TURN server
 void api_turn_stop_handler(G_GNUC_UNUSED SoupServer *soup_server,
                           SoupMessage *message, const char *path,
@@ -641,6 +858,7 @@ int main(int argc, char *argv[]) {
     // Add HTTP handlers
     soup_server_add_handler(soup_server, "/", soup_http_handler, NULL, NULL);
     soup_server_add_handler(soup_server, "/api/status", api_status_handler, NULL, NULL);
+    soup_server_add_handler(soup_server, "/api/config", api_config_handler, NULL, NULL);
     soup_server_add_handler(soup_server, "/api/start", api_start_handler, NULL, NULL);
     soup_server_add_handler(soup_server, "/api/stop", api_stop_handler, NULL, NULL);
     soup_server_add_handler(soup_server, "/api/turn/start", api_turn_start_handler, NULL, NULL);
@@ -658,6 +876,8 @@ int main(int argc, char *argv[]) {
     g_print("✓ Access control panel: http://127.0.0.1:%d/\n\n", SOUP_HTTP_PORT);
     g_print("API Endpoints:\n");
     g_print("  GET  /api/status        - Get current status\n");
+    g_print("  GET  /api/config        - Load configuration\n");
+    g_print("  POST /api/config        - Save configuration\n");
     g_print("  POST /api/start         - Start streaming\n");
     g_print("  POST /api/stop          - Stop streaming\n");
     g_print("  POST /api/turn/start    - Start TURN server\n");
