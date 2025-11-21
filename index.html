@@ -2,30 +2,151 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>WebRTC Control Panel</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WebRTC Control</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
-      padding: 16px; 
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: #e2e8f0;
-      min-height: 100vh;
+    
+    /* Theme Variables */
+    :root {
+      /* Dark Theme (Default) */
+      --bg-primary: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --bg-card: rgba(30, 41, 59, 0.8);
+      --bg-input: rgba(15, 23, 42, 0.6);
+      --bg-item: rgba(30, 41, 59, 0.4);
+      --bg-hover: rgba(59, 130, 246, 0.05);
+      
+      --border-primary: rgba(148, 163, 184, 0.1);
+      --border-secondary: rgba(148, 163, 184, 0.2);
+      
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-accent: #60a5fa;
+      --text-title: #f1f5f9;
+      
+      --accent-primary: #3b82f6;
+      --accent-secondary: #2563eb;
+      --success-primary: #10b981;
+      --success-secondary: #059669;
+      --danger-primary: #ef4444;
+      --danger-secondary: #dc2626;
+      
+      --badge-running-bg: rgba(16, 185, 129, 0.2);
+      --badge-running-color: #34d399;
+      --badge-running-border: rgba(16, 185, 129, 0.3);
+      
+      --badge-stopped-bg: rgba(239, 68, 68, 0.2);
+      --badge-stopped-color: #fca5a5;
+      --badge-stopped-border: rgba(239, 68, 68, 0.3);
+      
+      --modal-bg: rgba(0, 0, 0, 0.8);
+      --modal-content: rgba(30, 41, 59, 0.95);
+      
+      --blue-screen: #1e40af;
+      --busy-screen: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%);
     }
     
-    .container { max-width: 1400px; margin: 0 auto; }
+    /* Light Theme */
+    [data-theme="light"] {
+      --bg-primary: linear-gradient(135deg, #e3dfd0 0%, #d9d5c3 100%);
+      --bg-card: rgba(255, 255, 255, 0.9);
+      --bg-input: rgba(255, 255, 255, 0.95);
+      --bg-item: rgba(248, 248, 248, 0.95);
+      --bg-hover: rgba(57, 73, 171, 0.05);
+      
+      --border-primary: rgba(57, 73, 171, 0.15);
+      --border-secondary: rgba(57, 73, 171, 0.2);
+      
+      --text-primary: #2c2c2c;
+      --text-secondary: #666666;
+      --text-accent: #3949ab;
+      --text-title: #1a1a1a;
+      
+      --accent-primary: #1e40af;
+      --accent-secondary: #1976d2;
+      --success-primary: #4caf50;
+      --success-secondary: #388e3c;
+      --danger-primary: #f44336;
+      --danger-secondary: #d32f2f;
+      
+      --badge-running-bg: rgba(76, 175, 80, 0.15);
+      --badge-running-color: #2e7d32;
+      --badge-running-border: rgba(76, 175, 80, 0.4);
+      
+      --badge-stopped-bg: rgba(244, 67, 54, 0.15);
+      --badge-stopped-color: #c62828;
+      --badge-stopped-border: rgba(244, 67, 54, 0.4);
+      
+      --modal-bg: rgba(0, 0, 0, 0.6);
+      --modal-content: rgba(255, 255, 255, 0.98);
+      
+      --blue-screen: #1e40af;
+      --busy-screen: linear-gradient(135deg, rgba(244, 67, 54, 0.95) 0%, rgba(211, 47, 47, 0.95) 100%);
+    }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
+      padding: 9px; 
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    
+    .container { max-width: 1600px; margin: 0 auto; }
     
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       flex-wrap: wrap;
       gap: 12px;
     }
     
-    h1 { font-size: clamp(18px, 4vw, 24px); color: #f1f5f9; }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+    }
+    
+    h1 { font-size: clamp(16px, 4vw, 24px); color: var(--text-title); }
+    
+    /* Theme Toggle Switch */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-secondary);
+      border-radius: 7px;
+      padding: 3px 7px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle:hover {
+      border-color: var(--text-accent);
+    }
+    
+    .theme-icon {
+      font-size: 15px;
+      transition: transform 0.3s ease;
+    }
+    
+    .theme-toggle:hover .theme-icon {
+      transform: rotate(20deg);
+    }
+    
+    .theme-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
     
     .status-badges {
       display: flex;
@@ -39,63 +160,74 @@
       gap: 6px;
       padding: 6px 12px; 
       border-radius: 6px; 
-      font-size: 11px; 
+      font-size: 10px; 
       font-weight: 600; 
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      white-space: nowrap;
+      transition: all 0.3s ease;
     }
     
     .badge-running {
-      background: rgba(16, 185, 129, 0.2);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      background: var(--badge-running-bg);
+      color: var(--badge-running-color);
+      border: 1px solid var(--badge-running-border);
     }
     
     .badge-stopped {
-      background: rgba(239, 68, 68, 0.2);
-      color: #fca5a5;
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      background: var(--badge-stopped-bg);
+      color: var(--badge-stopped-color);
+      border: 1px solid var(--badge-stopped-border);
     }
     
     .card {
-      background: rgba(30, 41, 59, 0.8);
+      background: var(--bg-card);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(148, 163, 184, 0.1);
+      border: 1px solid var(--border-primary);
       border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
+      padding: 9px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
     }
     
     .card-title { 
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 12px; 
-      color: #60a5fa;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 10px; 
+      color: var(--text-accent);
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     
-    .grid { display: grid; gap: 16px; }
+    .grid { display: grid; gap: 9px; }
     
-    @media (min-width: 768px) {
-      .grid-2 { grid-template-columns: 1fr 1fr; }
+    @media (min-width: 1024px) {
+      .grid-2 { grid-template-columns: 1fr 2.7fr; }
     }
     
     .form-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
+      gap: 9px;
       margin-bottom: 12px;
+    }
+    
+    /* Responsive form rows */
+    @media (min-width: 640px) {
+      .form-row { grid-template-columns: repeat(2, 1fr); }
+      .form-row-3 { grid-template-columns: repeat(3, 1fr); }
+      .form-row-4 { grid-template-columns: repeat(4, 1fr); }
     }
     
     .form-group { margin-bottom: 12px; }
     
     label {
       display: block;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
-      color: #94a3b8;
+      color: var(--text-secondary);
       margin-bottom: 4px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -105,18 +237,21 @@
     input[type="number"],
     select {
       width: 100%;
-      padding: 8px 10px;
-      border: 1px solid rgba(148, 163, 184, 0.2);
+      padding: 10px;
+      border: 1px solid var(--border-secondary);
       border-radius: 6px;
-      background: rgba(15, 23, 42, 0.6);
-      color: #e2e8f0;
+      background: var(--bg-input);
+      color: var(--text-primary);
       font-size: 13px;
       font-family: 'SF Mono', Monaco, monospace;
+      /* -webkit-appearance: none;
+      appearance: none; */
+      transition: all 0.3s ease;
     }
     
     input:focus, select:focus {
       outline: none;
-      border-color: #3b82f6;
+      border-color: var(--accent-primary);
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
     
@@ -126,7 +261,7 @@
     }
     
     button {
-      padding: 10px 20px;
+      padding: 10px 16px;
       border: none;
       border-radius: 8px;
       font-weight: 600;
@@ -137,6 +272,9 @@
       align-items: center;
       gap: 6px;
       justify-content: center;
+      white-space: nowrap;
+      min-height: 44px;
+      -webkit-tap-highlight-color: transparent;
     }
     
     button:disabled {
@@ -145,7 +283,7 @@
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
       color: white;
     }
     
@@ -154,8 +292,12 @@
       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     }
     
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
     .btn-success {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: linear-gradient(135deg, var(--success-primary) 0%, var(--success-secondary) 100%);
       color: white;
     }
     
@@ -164,8 +306,12 @@
       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
     }
     
+    .btn-success:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
     .btn-danger {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      background: linear-gradient(135deg, var(--danger-primary) 0%, var(--danger-secondary) 100%);
       color: white;
     }
     
@@ -174,25 +320,43 @@
       box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
     }
     
+    .btn-danger:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
     .btn-secondary {
       background: rgba(100, 116, 139, 0.2);
-      color: #cbd5e1;
-      border: 1px solid rgba(100, 116, 139, 0.3);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-secondary);
     }
     
     .btn-icon {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
+      min-height: 40px;
       padding: 0;
       border-radius: 50%;
       background: rgba(59, 130, 246, 0.2);
-      color: #60a5fa;
-      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: var(--text-accent);
+      border: 1px solid var(--border-secondary);
     }
     
     .btn-icon:hover:not(:disabled) {
       background: rgba(59, 130, 246, 0.3);
-      transform: scale(1.1);
+      transform: scale(1.05);
+    }
+    
+    .btn-edit {
+      padding: 8px 14px;
+      font-size: 12px;
+      min-height: 36px;
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--text-accent);
+      border: 1px solid var(--border-secondary);
+    }
+    
+    .btn-edit:hover:not(:disabled) {
+      background: rgba(59, 130, 246, 0.3);
     }
     
     .controls {
@@ -215,6 +379,167 @@
       display: block;
       aspect-ratio: 16/9;
       background: #000;
+      outline: none;
+    }
+    
+    /* Blue Screen Overlay */
+    .blue-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--blue-screen);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: opacity 0.3s ease;
+    }
+    
+    .blue-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    /* Busy Screen Overlay */
+    .busy-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--busy-screen);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .busy-screen.active { display: flex; }
+    
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    .busy-icon { 
+      font-size: clamp(48px, 10vw, 64px); 
+      margin-bottom: 16px; 
+      animation: pulse 2s ease-in-out infinite; 
+    }
+    
+    .busy-title { 
+      font-size: clamp(20px, 5vw, 32px); 
+      font-weight: 700; 
+      color: white; 
+      margin-bottom: 12px; 
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); 
+    }
+    
+    .busy-message { 
+      font-size: clamp(14px, 3vw, 18px); 
+      color: rgba(255, 255, 255, 0.95); 
+      margin-bottom: 24px; 
+      line-height: 1.6; 
+    }
+    
+    .btn-cancel-queue { 
+      padding: 12px 32px; 
+      background: white; 
+      color: #dc2626; 
+      border: none; 
+      border-radius: 8px; 
+      font-weight: 600; 
+      font-size: 14px; 
+      cursor: pointer; 
+      transition: all 0.2s ease; 
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      min-height: 44px;
+    }
+    
+    .btn-cancel-queue:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4); 
+    }
+    /* Tap to Play Overlay (for mobile autoplay fallback) */
+    .tap-to-play {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 15;
+      cursor: pointer;
+    }
+    
+    .tap-to-play.active { display: flex; }
+    
+    .tap-icon { 
+      font-size: 72px; 
+      margin-bottom: 16px; 
+      animation: pulse 2s ease-in-out infinite; 
+    }
+    
+    .tap-title { 
+      font-size: 28px; 
+      font-weight: 700; 
+      color: white; 
+      margin-bottom: 8px; 
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); 
+    }
+    
+    .tap-message { 
+      font-size: 16px; 
+      color: rgba(255, 255, 255, 0.9); 
+      text-align: center; 
+    }
+    
+    /* Loading Overlay */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 25;
+      backdrop-filter: blur(10px);
+    }
+    
+    .loading-overlay.active { display: flex; }
+    
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(59, 130, 246, 0.2);
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #60a5fa;
+      text-align: center;
+      animation: pulse 2s ease-in-out infinite;
     }
     
     .checkbox-group {
@@ -222,16 +547,18 @@
       align-items: center;
       gap: 8px;
       padding: 10px;
-      background: rgba(15, 23, 42, 0.6);
+      background: var(--bg-input);
       border-radius: 6px;
-      border: 1px solid rgba(148, 163, 184, 0.2);
+      border: 1px solid var(--border-secondary);
       font-size: 13px;
+      transition: all 0.3s ease;
     }
     
     .checkbox-group input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       cursor: pointer;
+      flex-shrink: 0;
     }
     
     /* Modal Styles */
@@ -242,26 +569,29 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.8);
+      background: var(--modal-bg);
       z-index: 1000;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 12px;
+      overflow-y: auto;
     }
     
     .modal.active { display: flex; }
     
     .modal-content {
-      background: rgba(30, 41, 59, 0.95);
+      background: var(--modal-content);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(148, 163, 184, 0.2);
+      border: 1px solid var(--border-secondary);
       border-radius: 12px;
-      padding: 20px;
-      max-width: 500px;
+      padding: 16px;
+      max-width: 700px;
       width: 100%;
-      max-height: 80vh;
+      max-height: 90vh;
       overflow-y: auto;
       position: relative;
+      margin: auto;
+      transition: all 0.3s ease;
     }
     
     .modal-header {
@@ -269,252 +599,671 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
+      gap: 12px;
     }
     
     .modal-title {
-      font-size: 18px;
+      font-size: clamp(16px, 4vw, 18px);
       font-weight: 600;
-      color: #f1f5f9;
+      color: var(--text-title);
     }
     
     .modal-close {
-      background: rgba(239, 68, 68, 0.2);
-      color: #fca5a5;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      width: 32px;
-      height: 32px;
+      background: var(--badge-stopped-bg);
+      color: var(--badge-stopped-color);
+      border: 1px solid var(--badge-stopped-border);
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      min-height: 36px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: bold;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
     }
     
     .modal-close:hover {
       background: rgba(239, 68, 68, 0.3);
+      transform: scale(1.1);
     }
     
-    .stats-grid { display: grid; gap: 12px; }
+    .stats-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px; 
+    }
     
     .stat-item {
-      background: rgba(15, 23, 42, 0.6);
+      background: var(--bg-input);
       padding: 12px;
       border-radius: 8px;
-      border-left: 3px solid #3b82f6;
+      border: 1px solid var(--border-secondary);
+      transition: all 0.3s ease;
     }
     
     .stat-label {
-      font-size: 11px;
-      color: #94a3b8;
+      font-size: 10px;
+      color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 4px;
     }
     
     .stat-value {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
-      color: #e2e8f0;
+      color: var(--text-accent);
       font-family: 'SF Mono', Monaco, monospace;
       word-break: break-all;
     }
     
-    /* Loading Indicator */
-    .loading {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      background: rgba(245, 158, 11, 0.2);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.3);
+    /* Config Display - Responsive */
+    .config-display {
+      background: var(--bg-input);
+      border-radius: 8px;
+      border: 1px solid var(--border-secondary);
+      padding: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .config-grid {
+      display: grid;
+      gap: 6px;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+    
+    .config-item {
+      background: var(--bg-item);
+      padding: 8px;
       border-radius: 6px;
+      border: 1px solid var(--border-primary);
+      transition: all 0.3s ease;
+    }
+    
+    .config-label {
+      font-size: 9px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+      font-weight: 750;
+    }
+    
+    .config-value {
       font-size: 12px;
-      font-weight: 600;
-    }
-    
-    .loading.active { display: inline-flex; }
-    
-    .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(251, 191, 36, 0.3);
-      border-top-color: #fbbf24;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+      font-family: 'SF Mono', Monaco, monospace;
+      color: var(--text-primary);
+      font-weight: 500;
+      word-break: break-word;
     }
     
     .log-container {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(148, 163, 184, 0.1);
+      background: var(--bg-input);
+      border: 1px solid var(--border-primary);
       border-radius: 8px;
       padding: 12px;
       max-height: 200px;
       overflow-y: auto;
       font-family: 'SF Mono', Monaco, monospace;
       font-size: 11px;
+      transition: all 0.3s ease;
     }
     
     .log-line {
-      padding: 4px 8px;
+      padding: 6px 8px;
       border-radius: 4px;
-      background: rgba(30, 41, 59, 0.4);
+      background: var(--bg-item);
       border-left: 2px solid transparent;
       display: flex;
-      gap: 8px;
+      flex-direction: column;
+      gap: 4px;
       margin-bottom: 4px;
+      transition: all 0.3s ease;
+    }
+    
+    @media (min-width: 640px) {
+      .log-line {
+        flex-direction: row;
+        gap: 8px;
+      }
     }
     
     .log-time {
-      color: #64748b;
+      color: var(--text-secondary);
       font-weight: 600;
-      min-width: 70px;
+      font-size: 10px;
+    }
+    
+    @media (min-width: 640px) {
+      .log-time {
+        min-width: 70px;
+      }
     }
     
     .log-message {
       flex: 1;
-      color: #e2e8f0;
+      color: var(--text-primary);
+      font-size: 11px;
+      word-break: break-word;
     }
     
-    .log-line.log-success { border-left-color: #10b981; }
-    .log-line.log-error { border-left-color: #ef4444; }
+    .log-line.log-success { border-left-color: var(--success-primary); }
+    .log-line.log-error { border-left-color: var(--danger-primary); }
     .log-line.log-warning { border-left-color: #f59e0b; }
-    .log-line.log-info { border-left-color: #3b82f6; }
+    .log-line.log-info { border-left-color: var(--accent-primary); }
 
     .divider {
       height: 1px;
-      background: rgba(148, 163, 184, 0.2);
+      background: var(--border-secondary);
       margin: 16px 0;
     }
+        /* Codec Support Badges */
+    .codec-support-section {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      background: var(--bg-item);
+      border-radius: 8px;
+      border: 1px solid var(--border-primary);
+      transition: all 0.3s ease;
+    }
+    
+    .codec-support-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    
+    .codec-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .codec-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid;
+      transition: all 0.3s ease;
+    }
+    
+    .codec-icon {
+      font-size: 14px;
+    }
+    
+    .codec-name {
+      font-family: 'SF Mono', Monaco, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .codec-status {
+      font-size: 10px;
+      opacity: 0.9;
+    }
+    
+    /* Checking state */
+    .codec-badge-checking {
+      background: rgba(100, 116, 139, 0.2);
+      color: #94a3b8;
+      border-color: rgba(100, 116, 139, 0.3);
+    }
+    
+    [data-theme="light"] .codec-badge-checking {
+      background: rgba(100, 116, 139, 0.15);
+      color: #64748b;
+      border-color: rgba(100, 116, 139, 0.4);
+    }
+    
+    /* Supported state */
+    .codec-badge-supported {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    
+    [data-theme="light"] .codec-badge-supported {
+      background: rgba(76, 175, 80, 0.15);
+      color: #2e7d32;
+      border-color: rgba(76, 175, 80, 0.4);
+    }
+    
+    /* Not supported state */
+    .codec-badge-not-supported {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    
+    [data-theme="light"] .codec-badge-not-supported {
+      background: rgba(244, 67, 54, 0.15);
+      color: #c62828;
+      border-color: rgba(244, 67, 54, 0.4);
+    }
+    
+    /* Unknown state */
+    .codec-badge-unknown {
+      background: rgba(100, 116, 139, 0.2);
+      color: #cbd5e1;
+      border-color: rgba(100, 116, 139, 0.3);
+    }
+    
+    [data-theme="light"] .codec-badge-unknown {
+      background: rgba(100, 116, 139, 0.15);
+      color: #475569;
+      border-color: rgba(100, 116, 139, 0.4);
+    }
+    
+    /* P2P Section Styles */
+    .p2p-section {
+      padding: 12px;
+      background: var(--bg-item);
+      border-radius: 8px;
+      border: 1px solid var(--border-primary);
+      transition: all 0.3s ease;
+    }
+    
+    .p2p-section.disabled {
+      opacity: 0.5;
+    }
+    
+    /* Section Headers in Modal */
+    .section-header {
+      font-size: 15px;
+      color: var(--text-accent);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    
+    /* Improve scrollbar */
+    .modal-content::-webkit-scrollbar,
+    .log-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .modal-content::-webkit-scrollbar-track,
+    .log-container::-webkit-scrollbar-track {
+      background: var(--bg-item);
+      border-radius: 4px;
+    }
+    
+    .modal-content::-webkit-scrollbar-thumb,
+    .log-container::-webkit-scrollbar-thumb {
+      background: var(--border-secondary);
+      border-radius: 4px;
+    }
+    
+    /* Mobile optimization */
+    @media (max-width: 640px) {
+      body { padding: 8px; }
+      .card { padding: 12px; }
+      .header { margin-bottom: 12px; }
+      h1 { font-size: 18px; }
+      .badge { font-size: 9px; padding: 5px 10px; }
+      button { font-size: 12px; padding: 10px 14px; }
+    }
+    /* Alert Overlay */
+/* Alert Overlay */
+  .alert-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--modal-bg);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      animation: fadeIn 0.2s ease;
+      padding: 12px;
+  }
+
+  .alert-overlay.active {
+      display: flex;
+  }
+
+  .alert-box {
+      background: var(--modal-content);
+      backdrop-filter: blur(10px);
+      border: 2px solid var(--danger-primary);
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideIn 0.3s ease;
+      transition: all 0.3s ease;
+  }
+
+  .alert-box.success {
+      border-color: var(--success-primary);
+  }
+
+  .alert-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-secondary);
+  }
+
+  .alert-icon {
+      font-size: 32px;
+      line-height: 1;
+      animation: iconBounce 0.5s ease;
+      flex-shrink: 0;
+  }
+
+  @keyframes iconBounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+  }
+
+  .alert-title {
+      font-size: clamp(16px, 4vw, 20px);
+      font-weight: 700;
+      color: var(--danger-primary);
+      flex: 1;
+  }
+
+  .alert-box.success .alert-title {
+      color: var(--success-primary);
+  }
+
+  .alert-message {
+      background: var(--bg-input);
+      border-left: 4px solid var(--danger-primary);
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid var(--border-secondary);
+      transition: all 0.3s ease;
+  }
+
+  .alert-box.success .alert-message {
+      border-left-color: var(--success-primary);
+  }
+
+  /* Custom scrollbar for alert message */
+  .alert-message::-webkit-scrollbar {
+      width: 8px;
+  }
+
+  .alert-message::-webkit-scrollbar-track {
+      background: var(--bg-item);
+      border-radius: 4px;
+  }
+
+  .alert-message::-webkit-scrollbar-thumb {
+      background: var(--border-secondary);
+      border-radius: 4px;
+  }
+
+  .alert-message::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+  }
+
+  .alert-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+  }
+
+  .alert-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+  }
+
+  .alert-btn:active {
+      transform: scale(0.98);
+  }
+
+  .alert-btn-primary {
+      background: linear-gradient(135deg, var(--danger-primary) 0%, var(--danger-secondary) 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  }
+
+  .alert-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+  }
+
+  .alert-btn-success {
+      background: linear-gradient(135deg, var(--success-primary) 0%, var(--success-secondary) 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+
+  .alert-btn-success:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+  }
+
+  .alert-btn-secondary {
+      background: rgba(100, 116, 139, 0.2);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-secondary);
+  }
+
+  .alert-btn-secondary:hover {
+      background: rgba(100, 116, 139, 0.3);
+  }
+
+  @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+  }
+
+  @keyframes slideIn {
+      from {
+          transform: translateY(-30px);
+          opacity: 0;
+      }
+      to {
+          transform: translateY(0);
+          opacity: 1;
+      }
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+      .alert-box {
+          width: 95%;
+          padding: 16px;
+          max-height: 90vh;
+      }
+      
+      .alert-title {
+          font-size: 16px;
+      }
+      
+      .alert-icon {
+          font-size: 24px;
+      }
+      
+      .alert-actions {
+          flex-direction: column;
+      }
+      
+      .alert-btn {
+          width: 100%;
+      }
+  }
   </style>
 </head>
 <body>
   <div class="container">
     <!-- Header -->
-    <div class="header">
-      <h1>🎥 WebRTC Control Panel</h1>
+    <!-- <div class="header">
+      <div class="header-left">
+        <h1>WebRTC Control</h1>
+        <div class="theme-toggle" id="themeToggle">
+          <span class="theme-icon" id="themeIcon">🌙</span>
+          <span class="theme-label" id="themeLabel">Dark</span>
+        </div>
+      </div>
       <div class="status-badges">
         <span class="badge badge-stopped" id="serverStatus">⚫ Stream Stopped</span>
-        <span class="badge badge-stopped" id="turnStatus">⚫ TURN Stopped</span>
       </div>
-    </div>
+    </div> -->
     
     <!-- Main Grid -->
     <div class="grid grid-2">
-      <!-- Left Column -->
       <div>
-        <!-- Stream Configuration -->
+        <!-- Stream Control Card -->
         <div class="card">
-          <div class="card-title">⚙️ Stream Configuration</div>
-          
-          <!-- Video Settings -->
-          <div class="form-row">
-            <div class="form-group">
-              <label>Video Bitrate (kbps)</label>
-              <input type="number" id="bitrate" value="1000" min="100" max="20000" step="100">
+          <div class="card-title">
+            <span>⚙️ Stream Control</span>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <div class="theme-toggle" id="themeToggle">
+                <span class="theme-icon" id="themeIcon">🌙</span>
+                <span class="theme-label" id="themeLabel">Dark</span>
+              </div>
+              <div class="status-badges">
+                <span class="badge badge-stopped" id="serverStatus">⚫ Stream Stopped</span>
+              </div>
             </div>
-            <div class="form-group">
-              <label>FPS</label>
-              <input type="number" id="fps" value="15" min="1" max="60">
-            </div>
-            <div class="form-group">
-              <label>Video Codec</label>
-              <select id="codec">
-                <option value="h264">H.264</option>
-                <option value="h265" selected>H.265</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label>Width</label>
-              <input type="number" id="width" value="1920">
-            </div>
-            <div class="form-group">
-              <label>Height</label>
-              <input type="number" id="height" value="1080">
-            </div>
-          </div>
-          
-          <!-- Audio Settings (Optional) -->
-          <div class="divider"></div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label>Audio Codec (Optional)</label>
-              <select id="acodec">
-                <option value="">None (Video Only)</option>
-                <option value="aac">AAC</option>
-                <option value="opus" selected>Opus</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Audio Bitrate (kbps)</label>
-              <input type="number" id="abitrate" value="128" min="64" max="512" step="32">
-            </div>
-          </div>
-          
-          <!-- TURN/STUN Settings (Pipeline Parameters) -->
-          <div class="divider"></div>
-          
-          <div class="form-group">
-            <label>TURN URL (Pipeline)</label>
-            <input type="text" id="turnUrl" value="turn://ab:ab@192.168.25.90:3478">
-          </div>
-          
-          <div class="form-group">
-            <label>STUN URL (Pipeline)</label>
-            <input type="text" id="stunUrl" value="stun:stun.l.google.com:19302">
           </div>
           
           <div class="controls">
-            <button class="btn-success" id="btnStartStream">🚀 Start Stream</button>
-            <button class="btn-danger" id="btnStopStream" disabled>🛑 Stop Stream</button>
-            <div class="loading" id="streamLoading">
-              <div class="spinner"></div>
-              <span id="streamLoadingText">Processing...</span>
+            <button class="btn-success" id="btnStartStream">▶ Start Stream</button>
+            <button class="btn-danger" id="btnStopStream" disabled>⏹ Stop Stream</button>
+          </div>
+        </div>
+      
+        <!-- Console Card -->
+        <div class="card">
+          <div class="card-title">📋 Console</div>
+          <!-- Codec Support Badges -->
+          <div class="codec-support-section">
+            <div class="codec-support-label">Browser Codec Support:</div>
+            <div class="codec-badges">
+              <div class="codec-badge codec-badge-checking" id="codecBadgeH264">
+                <span class="codec-icon">⏳</span>
+                <span class="codec-name">H.264</span>
+                <span class="codec-status">Checking...</span>
+              </div>
+              <div class="codec-badge codec-badge-checking" id="codecBadgeH265">
+                <span class="codec-icon">⏳</span>
+                <span class="codec-name">H.265</span>
+                <span class="codec-status">Checking...</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="log-container" id="logContainer"></div>
+        </div>
+      </div>
+      
+      <!-- Right Column: Configuration & Video -->
+      <div>
+        <!-- Stream Configuration Card -->
+        <div class="card">
+          <div class="card-title">
+            <span>⚙️ Stream Configuration</span>
+            <button class="btn-edit" id="btnEditConfig">✏️ Edit</button>
+          </div>
+          
+          <div class="config-display">
+            <div class="config-grid">
+              <div class="config-item">
+                <div class="config-label">Codec</div>
+                <div class="config-value" id="cfgCodec">H264</div>
+              </div>
+              <div class="config-item">
+                <div class="config-label">Resolution</div>
+                <div class="config-value" id="cfgResolution">1920x1080</div>
+              </div>
+              <div class="config-item">
+                <div class="config-label">Bitrate</div>
+                <div class="config-value" id="cfgBitrate">5000</div>
+              </div>
+              <div class="config-item">
+                <div class="config-label">FPS</div>
+                <div class="config-value" id="cfgFps">60</div>
+              </div>
+              <div class="config-item">
+                <div class="config-label">Audio</div>
+                <div class="config-value" id="cfgAudio">Opus/128</div>
+              </div>
+              <div class="config-item">
+                <div class="config-label">P2P</div>
+                <div class="config-value" id="cfgP2P">OFF</div>
+              </div>
+              <div class="config-item">
+                <div class="config-label">TURN</div>
+                <div class="config-value" id="cfgTurn">192.168.25.90</div>
+              </div>
+              <div class="config-item">
+                <div class="config-label">STUN</div>
+                <div class="config-value" id="cfgStun">stun.l.google.com</div>
+              </div>
             </div>
           </div>
         </div>
         
-        <!-- TURN Server Control -->
+        <!-- Video Player Card -->
         <div class="card">
-          <div class="card-title">🔄 TURN Server Control</div>
-          <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">
-            Start/Stop the TURN server independently
-          </p>
-          
-          <div class="controls">
-            <button class="btn-success" id="btnStartTurn">▶️ Start TURN</button>
-            <button class="btn-danger" id="btnStopTurn" disabled>⏹️ Stop TURN</button>
-            <div class="loading" id="turnLoading">
-              <div class="spinner"></div>
-              <span id="turnLoadingText">Processing...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Right Column -->
-      <div>
-        <!-- Video Viewer -->
-        <div class="card">
-          <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>📺 Live Stream</span>
-            <button class="btn-icon" id="btnShowStats" title="Show Statistics" disabled>
-              📊
-            </button>
+          <div class="card-title">
+            <span>📺 Video Stream</span>
+            <button class="btn-icon" id="btnShowStats" disabled>📊</button>
           </div>
           
           <div class="video-container">
-            <video id="video" autoplay playsinline muted></video>
+            <div class="blue-screen" id="blueScreen"></div>
+            <div class="busy-screen" id="busyScreen">
+              <div class="busy-icon">⏳</div>
+              <div class="busy-title">Server Busy</div>
+              <div class="busy-message">Another viewer is currently connected.<br>Please try again in a moment.</div>
+              <button class="btn-cancel-queue" id="btnGoBack">Go Back</button>
+            </div>
+            <div class="loading-overlay" id="loadingOverlay">
+              <div class="loading-spinner"></div>
+              <div class="loading-text" id="loadingText">Loading...</div>
+            </div>
+            <div class="tap-to-play" id="tapToPlay">
+              <div class="tap-icon">▶️</div>
+              <div class="tap-title">Tap to Play</div>
+              <div class="tap-message">Autoplay was blocked by your browser</div>
+            </div>
+            <video id="video" autoplay playsinline controls></video>
           </div>
           
           <div style="margin-top: 12px;">
@@ -527,17 +1276,176 @@
           </div>
           
           <div class="controls" style="margin-top: 12px;">
-            <button class="btn-primary" id="btnConnect">🔗 Connect</button>
-            <button class="btn-secondary" id="btnDisconnect" disabled>🔌 Disconnect</button>
+            <button class="btn-primary" id="btnConnect">Connect</button>
+            <button class="btn-danger" id="btnDisconnect" disabled>Disconnect</button>
           </div>
         </div>
       </div>
     </div>
-    
-    <!-- Activity Log -->
-    <div class="card">
-      <div class="card-title">📝 Activity Log</div>
-      <div class="log-container" id="logContainer"></div>
+  </div>
+  
+  <!-- Edit Configuration Modal -->
+  <div class="modal" id="configModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ Edit Stream Configuration</div>
+        <div class="modal-close" id="closeConfigModal">×</div>
+      </div>
+      
+      <div style="margin-bottom: 16px;">
+        <h3 class="section-header">🎬 Video Settings</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Video Codec</label>
+            <select id="editCodec">
+              <option value="hevc">HEVC (H.265)</option>
+              <option value="avcm">AVC-Main</option>
+              <option value="avcb">AVC-Baseline</option>
+              <option value="avch">AVC-High</option>
+              <option value="avccb">AVC-Constrained-Baseline</option>
+              <option value="avcch">AVC-Constrained-High</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Video Bitrate (kbps)</label>
+            <input type="number" id="editVideoBitrate" value="6000" min="100" max="50000" step="100">
+          </div>
+        </div>
+        
+        <div class="form-row form-row-3">
+          <div class="form-group">
+            <label>Width</label>
+            <input type="number" id="editVideoWidth" value="1920">
+          </div>
+          <div class="form-group">
+            <label>Height</label>
+            <input type="number" id="editVideoHeight" value="1080">
+          </div>
+          <div class="form-group">
+            <label>FPS</label>
+            <input type="number" id="editVideoFps" value="60" min="1" max="120">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Encoding Mode</label>
+            <select id="editVemode">
+              <option value="nbn">Normal-Bitrate (nbn)</option>
+              <option value="nbs">Normal-Bitrate-Limited (nbs)</option>
+              <option value="nfn">Normal-Framerate (nfn)</option>
+              <option value="lfn">Low-Delay Framerate (lfn)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>MTU Payload (bytes)</label>
+            <input type="number" id="editMtu" value="1200" min="600" max="1400" step="100">
+          </div>
+        </div>
+
+        <div class="form-row form-row-3">
+          <div class="form-group">
+            <label>Intra Type</label>
+            <select id="editIntraType">
+              <option value="slice">Slice</option>
+              <option value="cframe">Constant-Frame</option>
+              <option value="vframe">Variable-Frame</option>
+            </select>
+          </div>
+          <div class="form-group" id="intraCycleGroup">
+            <label>Intra Cycle (seconds)</label>
+            <select id="editIntraCycle">
+              <option value="1">0.5s</option>
+              <option value="2">1s</option>
+              <option value="3">1.5s</option>
+              <option value="4">2s</option>
+              <option value="6">3s</option>
+              <option value="8">4s</option>
+              <option value="10">5s</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Min QP (0-51)</label>
+            <input type="number" id="editMinQp" value="0" min="0" max="51" step="1">
+          </div>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <div style="margin-bottom: 16px;">
+        <h3 class="section-header">🎵 Audio Settings</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Audio Codec</label>
+            <select id="editAudioCodec">
+              <option value="none">None (Video Only)</option>
+              <option value="aac">AAC</option>
+              <option value="opus">Opus</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Audio Bitrate (kbps)</label>
+            <input type="number" id="editAudioBitrate" value="160" min="16" max="320" step="16">
+          </div>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <div style="margin-bottom: 16px;">
+        <h3 class="section-header">📡 P2P Stream (UDP RTP)</h3>
+        <div class="checkbox-group" style="margin-bottom: 12px;">
+          <input type="checkbox" id="editEnableP2P">
+          <label for="editEnableP2P" style="margin: 0; cursor: pointer; text-transform: none; font-size: 13px; color: var(--text-primary);">
+            Enable P2P UDP Stream
+          </label>
+        </div>
+        <div class="p2p-section" id="p2pFields">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Client IP</label>
+              <input type="text" id="editClientIp" value="192.168.25.13">
+            </div>
+            <div class="form-group">
+              <label>Client Port</label>
+              <input type="number" id="editClientPort" value="5004" min="1024" max="65535">
+            </div>
+          </div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
+            💡 Video on port [PORT], Audio on port [PORT+2]
+          </div>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <div style="margin-bottom: 16px;">
+        <h3 class="section-header">🌐 Network Settings (Optional for LAN)</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Signal Server Port</label>
+            <input type="number" id="editServerPort" value="5006" min="1024" max="65535">
+          </div>
+          <div class="form-group">
+            <label>HTML Index File</label>
+            <input type="text" id="editHtmlIndex" value="webrtc.html" placeholder="webrtc.html">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>TURN URL (leave empty for LAN mode)</label>
+          <input type="text" id="editTurn" placeholder="turn://username:password@host:port">
+        </div>
+        <div class="form-group">
+          <label>STUN URL (leave empty for LAN mode)</label>
+          <input type="text" id="editStun" placeholder="stun:stun.l.google.com:19302">
+        </div>
+      </div>
+      
+      <div class="controls" style="justify-content: flex-end; margin-top: 20px;">
+        <button class="btn-secondary" id="btnCancelConfig">Cancel</button>
+        <button class="btn-success" id="btnSaveConfig">💾 Save Configuration</button>
+      </div>
     </div>
   </div>
   
@@ -592,50 +1500,118 @@
       </div>
     </div>
   </div>
+  <!-- Alert Modal -->
+<div id="alertOverlay" class="alert-overlay">
+    <div id="alertBox" class="alert-box">
+        <div class="alert-header">
+            <div id="alertIcon" class="alert-icon">❌</div>
+            <div id="alertTitle" class="alert-title">Error</div>
+        </div>
+        <div id="alertMessage" class="alert-message"></div>
+        <div class="alert-actions">
+            <button id="alertClose" class="alert-btn alert-btn-primary">OK</button>
+        </div>
+    </div>
+</div>
 
 <script>
 (function() {
   'use strict';
+  // Theme Toggle Functionality
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeLabel = document.getElementById('themeLabel');
+  const htmlElement = document.documentElement;
   
-  // Dynamic WebSocket URL based on current hostname
+  // Load saved theme preference or default to dark
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  setTheme(savedTheme);
+  
+  themeToggle.addEventListener('click', () => {
+    const currentTheme = htmlElement.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+  });
+  
+  function setTheme(theme) {
+    if (theme === 'light') {
+      htmlElement.setAttribute('data-theme', 'light');
+      themeIcon.textContent = '☀️';
+      themeLabel.textContent = 'Light';
+      localStorage.setItem('theme', 'light');
+    } else {
+      htmlElement.removeAttribute('data-theme');
+      themeIcon.textContent = '🌙';
+      themeLabel.textContent = 'Dark';
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+  
+  // Configuration
+  const API_BASE = (location.protocol === 'https:' ? 'https://' : 'http://') + location.hostname + ':8082/api';
   const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.hostname + ':8081/ws';
-  const API_BASE = '/api';
   
   // Elements
-  const $bitrate = document.getElementById('bitrate');
-  const $fps = document.getElementById('fps');
-  const $width = document.getElementById('width');
-  const $height = document.getElementById('height');
-  const $codec = document.getElementById('codec');
-  const $acodec = document.getElementById('acodec');
-  const $abitrate = document.getElementById('abitrate');
-  const $turnUrl = document.getElementById('turnUrl');
-  const $stunUrl = document.getElementById('stunUrl');
-  
   const $btnStartStream = document.getElementById('btnStartStream');
   const $btnStopStream = document.getElementById('btnStopStream');
-  const $streamLoading = document.getElementById('streamLoading');
-  const $streamLoadingText = document.getElementById('streamLoadingText');
-  
-  const $btnStartTurn = document.getElementById('btnStartTurn');
-  const $btnStopTurn = document.getElementById('btnStopTurn');
-  const $turnLoading = document.getElementById('turnLoading');
-  const $turnLoadingText = document.getElementById('turnLoadingText');
-  
   const $serverStatus = document.getElementById('serverStatus');
-  const $turnStatus = document.getElementById('turnStatus');
+  // const $turnStatus = document.getElementById('turnStatus');
   
   const $video = document.getElementById('video');
+  const $blueScreen = document.getElementById('blueScreen');
+  const $busyScreen = document.getElementById('busyScreen');
+  const $loadingOverlay = document.getElementById('loadingOverlay');
+  const $loadingText = document.getElementById('loadingText');
+  const $tapToPlay = document.getElementById('tapToPlay');
+  const $btnGoBack = document.getElementById('btnGoBack');
   const $btnConnect = document.getElementById('btnConnect');
   const $btnDisconnect = document.getElementById('btnDisconnect');
   const $forceRelay = document.getElementById('forceRelay');
   const $btnShowStats = document.getElementById('btnShowStats');
   
+  const $logContainer = document.getElementById('logContainer');
+  const $codecBadgeH264 = document.getElementById('codecBadgeH264');
+  const $codecBadgeH265 = document.getElementById('codecBadgeH265');
+  
+  const $btnEditConfig = document.getElementById('btnEditConfig');
+  const $configModal = document.getElementById('configModal');
+  const $closeConfigModal = document.getElementById('closeConfigModal');
+  const $btnCancelConfig = document.getElementById('btnCancelConfig');
+  const $btnSaveConfig = document.getElementById('btnSaveConfig');
+  
+  const $cfgCodec = document.getElementById('cfgCodec');
+  const $cfgResolution = document.getElementById('cfgResolution');
+  const $cfgBitrate = document.getElementById('cfgBitrate');
+  const $cfgFps = document.getElementById('cfgFps');
+  const $cfgAudio = document.getElementById('cfgAudio');
+  const $cfgP2P = document.getElementById('cfgP2P');
+  const $cfgTurn = document.getElementById('cfgTurn');
+  const $cfgStun = document.getElementById('cfgStun');
+  
+  const $editCodec = document.getElementById('editCodec');
+  const $editVideoBitrate = document.getElementById('editVideoBitrate');
+  const $editVideoWidth = document.getElementById('editVideoWidth');
+  const $editVideoHeight = document.getElementById('editVideoHeight');
+  const $editVideoFps = document.getElementById('editVideoFps');
+  const $editVemode = document.getElementById('editVemode');
+  const $editMtu = document.getElementById('editMtu');
+  const $editIntraType = document.getElementById('editIntraType');
+  const $editIntraCycle = document.getElementById('editIntraCycle');
+  const $intraCycleGroup = document.getElementById('intraCycleGroup');
+  const $editMinQp = document.getElementById('editMinQp');
+  const $editAudioCodec = document.getElementById('editAudioCodec');
+  const $editAudioBitrate = document.getElementById('editAudioBitrate');
+  const $editEnableP2P = document.getElementById('editEnableP2P');
+  const $p2pFields = document.getElementById('p2pFields');
+  const $editClientIp = document.getElementById('editClientIp');
+  const $editClientPort = document.getElementById('editClientPort');
+  const $editServerPort = document.getElementById('editServerPort');
+  const $editTurn = document.getElementById('editTurn');
+  const $editStun = document.getElementById('editStun');
+  const $editHtmlIndex = document.getElementById('editHtmlIndex');
+  
   const $statsModal = document.getElementById('statsModal');
   const $closeStats = document.getElementById('closeStats');
-  
-  const $logContainer = document.getElementById('logContainer');
-  
   const $statCodec = document.getElementById('statCodec');
   const $statAudioCodec = document.getElementById('statAudioCodec');
   const $statResolution = document.getElementById('statResolution');
@@ -646,28 +1622,181 @@
   const $statDataReceived = document.getElementById('statDataReceived');
   const $statPacketsLost = document.getElementById('statPacketsLost');
   const $statJitter = document.getElementById('statJitter');
+  let lastErrorMessage = ''; // Store for copy functionality
+
+// ============================================================================
+// Loading Functions
+// ============================================================================
+  const $alertOverlay = document.getElementById('alertOverlay');
+  const $alertBox = document.getElementById('alertBox');
+  const $alertIcon = document.getElementById('alertIcon');
+  const $alertTitle = document.getElementById('alertTitle');
+  const $alertMessage = document.getElementById('alertMessage');
+  const $alertClose = document.getElementById('alertClose');
+
+  function showLoading(message = 'Loading...') {
+    $loadingText.textContent = message;
+    $loadingOverlay.classList.add('active');  
+  }
+
+  function hideLoading() {
+      $loadingOverlay.classList.remove('active');
+  }
+
+
+  // ============================================================================
+// Alert Functions
+// ============================================================================
+function showErrorAlert(message) {
+    lastErrorMessage = message;
+    
+    // Format the error message
+    const formattedMessage = formatErrorMessage(message);
+    
+    // Configure error alert
+    $alertBox.classList.remove('success');
+    $alertIcon.textContent = '❌';
+    $alertTitle.textContent = 'Streaming Failed to Start';
+    $alertMessage.textContent = formattedMessage;
+    $alertClose.className = 'alert-btn alert-btn-primary';
+    
+    // Show alert
+    $alertOverlay.classList.add('active');
+    console.log('Error Alert:', message);
+}
+
+function showSuccessAlert(message = 'StreamingProgram is now running and ready for connections.') {
+    // Configure success alert
+    $alertBox.classList.add('success');
+    $alertIcon.textContent = '✅';
+    $alertTitle.textContent = 'Streaming Started Successfully';
+    $alertMessage.textContent = message;
+    $alertClose.className = 'alert-btn alert-btn-success';
+
+    // Show alert
+    $alertOverlay.classList.add('active');
+    
+    // Auto-close after 3 seconds
+    setTimeout(() => {
+        hideAlert();
+    }, 3000);
+    
+    console.log('Success Alert:', message);
+}
+
+function hideAlert() {
+    $alertOverlay.classList.remove('active');
+}
+
+  $alertClose.addEventListener('click', hideAlert);
+  $alertOverlay.addEventListener('click', (e) => {
+      if (e.target === $alertOverlay) {
+          hideAlert();
+      }
+  });
+  // Close alert with Escape key
+  document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+          hideAlert();
+      }
+  });
   
-  // WebRTC state
+  // State - FIX: ICE candidate buffering to prevent race conditions
   let ws = null;
   let pc = null;
   let remoteStream = null;
   let statsInterval = null;
+  let pendingIceCandidates = [];  // Queue for ICE candidates that arrive before remote description
+  let remoteDescriptionSet = false;
   
-  // ICE Configuration
-  const ICE_CONFIG = {
-    iceServers: [
-      { urls: "stun:192.168.25.90:3478" },
-      {
-        urls: "turn:192.168.25.90:3478",
-        username: "ab",
-        credential: "ab",
-      },
-    ],
-    iceTransportPolicy: "all",
+  // Connection state management to prevent premature cleanup
+  let isConnecting = false;
+  let isConnected = false;
+  let intentionalDisconnect = false;
+  let cleanupInProgress = false;
+  let connectionTimeout = null;
+  const CONNECTION_TIMEOUT_MS = 10000; // 10 seconds
+  // let lastP2PClientIp = currentConfig.client_ip || '192.168.25.90';
+  // let lastP2PClientPort = currentConfig.client_port || 5004;
+  // Current configuration (loaded from .conf file)
+  let currentConfig = {
+    video_bitrate: 6000,
+    video_fps: 60,
+    video_width: 1920,
+    video_height: 1080,
+    codec: 'avcb',
+    vemode: 'nbn',
+    mtu: 1200,
+    intra: 'slice',
+    min_qp: 0,
+    audio_codec: 'none',
+    audio_bitrate: 160,
+    enable_p2p: false,
+    client_ip: '192.168.25.13',
+    client_port: 5004,
+    server_port: 5006,
+    html_index: 'webrtc.html',
+    turn_url: 'turn://ab:ab@160.248.76.236:3478',
+    stun_url: 'stun:160.248.76.236:3478'
   };
   
+  // WebRTC configuration (loaded from webrtc_parameters.conf, used for ICE servers)
+  let webrtcConfig = {
+    turn_url: 'turn://ab:ab@160.248.76.236:3478',
+    stun_url: 'stun:160.248.76.236:3478'
+  };
+  
+  // Remember last P2P values in localStorage (persists across page refreshes)
+  // Falls back to defaults if nothing stored
+  let lastP2PClientIp = localStorage.getItem('lastP2PClientIp') || '192.168.25.13';
+  let lastP2PClientPort = parseInt(localStorage.getItem('lastP2PClientPort')) || 5004;
+    
   // ============================================================================
-  // Utility Functions
+  // Audio Codec Change Handler
+  // ============================================================================
+  
+  $editAudioCodec.addEventListener('change', function() {
+    if (this.value === '' || this.value === 'none') {
+      $editAudioBitrate.disabled = true;
+      $editAudioBitrate.style.opacity = '0.5';
+    } else {
+      $editAudioBitrate.disabled = false;
+      $editAudioBitrate.style.opacity = '1';
+    }
+  });
+  
+  // P2P Enable/Disable Handler
+  $editEnableP2P.addEventListener('change', function() {
+    if (this.checked) {
+      // Enable P2P fields
+      $p2pFields.classList.remove('disabled');
+      $editClientIp.disabled = false;
+      $editClientPort.disabled = false;
+    } else {
+      // Store current values before disabling (in memory and localStorage)
+      lastP2PClientIp = $editClientIp.value || lastP2PClientIp;
+      lastP2PClientPort = $editClientPort.value || lastP2PClientPort;
+      localStorage.setItem('lastP2PClientIp', lastP2PClientIp);
+      localStorage.setItem('lastP2PClientPort', lastP2PClientPort.toString());
+      
+      // Disable P2P fields (but keep values visible)
+      $p2pFields.classList.add('disabled');
+      $editClientIp.disabled = true;
+      $editClientPort.disabled = true;
+    }
+  });
+  
+  // Intra Type Handler - Show/Hide Intra Cycle field
+  $editIntraType.addEventListener('change', function() {
+    if (this.value === 'slice') {
+      $intraCycleGroup.style.display = 'none';
+    } else {
+      $intraCycleGroup.style.display = 'block';
+    }
+  });
+  
+  // ============================================================================
+  // Console Logging
   // ============================================================================
   
   function log(message, type = 'info') {
@@ -677,126 +1806,458 @@
     line.innerHTML = `<span class="log-time">${time}</span><span class="log-message">${message}</span>`;
     $logContainer.appendChild(line);
     $logContainer.scrollTop = $logContainer.scrollHeight;
+    
+    // Keep last 100 entries
+    while ($logContainer.children.length > 100) {
+      $logContainer.removeChild($logContainer.firstChild);
+    }
   }
   
-  function setFormEnabled(enabled) {
-    $bitrate.disabled = !enabled;
-    $fps.disabled = !enabled;
-    $width.disabled = !enabled;
-    $height.disabled = !enabled;
-    $codec.disabled = !enabled;
-    $acodec.disabled = !enabled;
-    $abitrate.disabled = !enabled;
-    $turnUrl.disabled = !enabled;
-    $stunUrl.disabled = !enabled;
+  // ============================================================================
+  // Configuration Management
+  // ============================================================================
+  
+  function loadConfigToUI() {
+    // Update display row (values only, no units)
+    $cfgCodec.textContent = currentConfig.codec.toUpperCase();
+    $cfgResolution.textContent = `${currentConfig.video_width}x${currentConfig.video_height}`;
+    $cfgBitrate.textContent = currentConfig.video_bitrate;
+    $cfgFps.textContent = currentConfig.video_fps;
+    
+    const audioText = currentConfig.audio_codec && currentConfig.audio_codec !== 'none' && currentConfig.audio_codec !== '' ? 
+      `${currentConfig.audio_codec.charAt(0).toUpperCase() + currentConfig.audio_codec.slice(1).toUpperCase()}/${currentConfig.audio_bitrate}` : 
+      'None';
+    $cfgAudio.textContent = audioText;
+    
+    // P2P display
+    if (currentConfig.enable_p2p) {
+      $cfgP2P.textContent = `${currentConfig.client_ip}:${currentConfig.client_port}`;
+    } else {
+      $cfgP2P.textContent = 'OFF';
+    }
+      
+    // Extract host from TURN URL or show "LAN" if empty
+    if (currentConfig.turn_url && currentConfig.turn_url.trim() !== '') {
+      const turnHost = currentConfig.turn_url.match(/@([^:]+)/);
+      $cfgTurn.textContent = turnHost ? turnHost[1] : currentConfig.turn_url;
+    } else {
+      $cfgTurn.textContent = 'LAN';
+    }
+    
+    // Extract host from STUN URL or show "LAN" if empty
+    if (currentConfig.stun_url && currentConfig.stun_url.trim() !== '') {
+      const stunHost = currentConfig.stun_url.replace('stun:', '').split(':')[0];
+      $cfgStun.textContent = stunHost;
+    } else {
+      $cfgStun.textContent = 'LAN';
+    }
+    
+    // Update edit form
+    $editCodec.value = currentConfig.codec;
+    $editVideoBitrate.value = currentConfig.video_bitrate;
+    $editVideoWidth.value = currentConfig.video_width;
+    $editVideoHeight.value = currentConfig.video_height;
+    $editVideoFps.value = currentConfig.video_fps;
+    $editVemode.value = currentConfig.vemode;
+    $editMtu.value = currentConfig.mtu;
+    
+    // Parse intra value (e.g., "cframe:2" or "slice")
+    const intraValue = currentConfig.intra || 'slice';
+    if (intraValue === 'slice') {
+      $editIntraType.value = 'slice';
+      $intraCycleGroup.style.display = 'none';
+    } else {
+      const [type, cycle] = intraValue.split(':');
+      $editIntraType.value = type;
+      $editIntraCycle.value = cycle || '2';
+      $intraCycleGroup.style.display = 'block';
+    }
+    
+    $editMinQp.value = currentConfig.min_qp;
+    $editAudioCodec.value = currentConfig.audio_codec || 'none';
+    $editAudioBitrate.value = currentConfig.audio_bitrate;
+    $editEnableP2P.checked = currentConfig.enable_p2p || false;
+
+    // Always update the last known values if available from config (but skip empty strings)
+    if (currentConfig.client_ip && currentConfig.client_ip.trim() !== '') {
+      lastP2PClientIp = currentConfig.client_ip;
+      localStorage.setItem('lastP2PClientIp', currentConfig.client_ip);
+    }
+    if (currentConfig.client_port && currentConfig.client_port > 0) {
+      lastP2PClientPort = currentConfig.client_port;
+      localStorage.setItem('lastP2PClientPort', currentConfig.client_port.toString());
+    }
+
+    // Always show the values in the input fields (whether enabled or disabled)
+    // Priority: lastP2P (from memory) > config (from file) > defaults
+    $editClientIp.value = lastP2PClientIp || currentConfig.client_ip || '192.168.25.13';
+    $editClientPort.value = lastP2PClientPort || currentConfig.client_port || 5004;
+
+    $editServerPort.value = currentConfig.server_port;
+    $editTurn.value = currentConfig.turn_url;
+    $editStun.value = currentConfig.stun_url;
+    $editHtmlIndex.value = currentConfig.html_index;
+        // Update P2P fields state
+    if ($editEnableP2P.checked) {
+      $p2pFields.classList.remove('disabled');
+      $editClientIp.disabled = false;
+      $editClientPort.disabled = false;
+    } else {
+      $p2pFields.classList.add('disabled');
+      $editClientIp.disabled = true;
+      $editClientPort.disabled = true;
+    }
+    
+    // Update audio bitrate state
+    if (!$editAudioCodec.value || $editAudioCodec.value === 'none') {
+      $editAudioBitrate.disabled = true;
+      $editAudioBitrate.style.opacity = '0.5';
+    } else {
+      $editAudioBitrate.disabled = false;
+      $editAudioBitrate.style.opacity = '1';
+    }
+  }
+  
+  async function saveConfig() {
+    // Read form values
+    // Combine intra type and cycle (e.g., "cframe:2" or "slice")
+    let intraValue = $editIntraType.value;
+    if (intraValue !== 'slice') {
+      intraValue = `${intraValue}:${$editIntraCycle.value}`;
+    }
+    
+    const config = {
+      video_bitrate: parseInt($editVideoBitrate.value),
+      video_fps: parseInt($editVideoFps.value),
+      video_width: parseInt($editVideoWidth.value),
+      video_height: parseInt($editVideoHeight.value),
+      codec: $editCodec.value,
+      vemode: $editVemode.value,
+      mtu: parseInt($editMtu.value),
+      intra: intraValue,
+      min_qp: parseInt($editMinQp.value),
+      audio_codec: $editAudioCodec.value,
+      audio_bitrate: parseInt($editAudioBitrate.value),
+      enable_p2p: $editEnableP2P.checked,
+      client_ip: $editClientIp.value,
+      client_port: parseInt($editClientPort.value),
+      server_port: parseInt($editServerPort.value),
+      turn_url: $editTurn.value,
+      stun_url: $editStun.value,
+      html_index: $editHtmlIndex.value
+    };
+      // Remember latest P2P values in memory and localStorage (so they persist across refreshes)
+  if (config.client_ip) {
+    lastP2PClientIp = config.client_ip;
+    localStorage.setItem('lastP2PClientIp', config.client_ip);
+  }
+  if (!isNaN(config.client_port)) {
+    lastP2PClientPort = config.client_port;
+    localStorage.setItem('lastP2PClientPort', config.client_port.toString());
+  }
+  
+  // If P2P is disabled, clear values in config file (but keep in memory and localStorage above)
+  if (!config.enable_p2p) {
+    config.client_ip = '';
+    config.client_port = '';
+  }
+  
+  log('💾 Saving configuration...', 'info');
+    console.log('Config to save:', config);
+    
+    // Save to current config
+    currentConfig = config;
+    
+    // Update UI
+    loadConfigToUI();
+    
+    // Save to server (backend will write to .conf file)
+    try {
+      const url = `${API_BASE}/config`;
+      log(`→ POST ${url}`, 'info');
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      
+      console.log('Response status:', response.status, response.statusText);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Response:', result);
+        log('✓ Configuration saved to webrtc_parameters.conf', 'success');
+      } else {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        log(`✗ Server returned ${response.status}: ${response.statusText}`, 'error');
+      }
+    } catch (e) {
+      console.error('Fetch error:', e);
+      log('✗ Could not save to server: ' + e.message, 'error');
+    }
+    
+    // Close modal
+    $configModal.classList.remove('active');
+  }
+  
+  async function loadConfigFromServer() {
+    try {
+      log('📂 Loading configuration from server...', 'info');
+      const url = `${API_BASE}/config`;
+      
+      const response = await fetch(url);
+      console.log('Load config response:', response.status, response.statusText);
+      
+      if (response.ok) {
+        const config = await response.json();
+        console.log('Loaded config:', config);
+        currentConfig = config;
+              // Normalize enable_p2p to a real boolean
+      const enableP2P =
+        config.enable_p2p === true ||
+        config.enable_p2p === 'true' ||
+        config.enable_p2p === 1 ||
+        config.enable_p2p === '1';
+
+      // Merge with defaults so missing fields don’t break things
+      currentConfig = {
+        ...currentConfig,
+        ...config,
+        enable_p2p: enableP2P
+      };
+        
+        // Also update webrtcConfig with TURN/STUN settings
+        webrtcConfig.turn_url = config.turn_url || '';
+        webrtcConfig.stun_url = config.stun_url || '';
+        
+        loadConfigToUI();
+        log('✓ Configuration loaded from webrtc_parameters.conf', 'success');
+      } else {
+        log('⚠ Could not load config, using defaults', 'warning');
+        loadConfigToUI();
+      }
+    } catch (e) {
+      console.error('Load config error:', e);
+      log('⚠ Using default configuration: ' + e.message, 'warning');
+      loadConfigToUI();
+    }
   }
   
   // ============================================================================
   // Server Control API
   // ============================================================================
   
-  async function fetchStatus() {
-    try {
-      const response = await fetch(`${API_BASE}/status`);
-      const data = await response.json();
-      
-      // Update streaming status
-      if (data.streaming_running) {
-        $serverStatus.textContent = '🟢 Stream Running';
-        $serverStatus.className = 'badge badge-running';
-        $btnStartStream.disabled = true;
-        $btnStopStream.disabled = false;
-        setFormEnabled(false);
-      } else {
-        $serverStatus.textContent = '⚫ Stream Stopped';
-        $serverStatus.className = 'badge badge-stopped';
-        $btnStartStream.disabled = false;
-        $btnStopStream.disabled = true;
-        setFormEnabled(true);
-      }
-      
-      // Update TURN status
-      if (data.turn_running) {
-        $turnStatus.textContent = '🟢 TURN Running';
-        $turnStatus.className = 'badge badge-running';
-        $btnStartTurn.disabled = true;
-        $btnStopTurn.disabled = false;
-      } else {
-        $turnStatus.textContent = '⚫ TURN Stopped';
-        $turnStatus.className = 'badge badge-stopped';
-        $btnStartTurn.disabled = false;
-        $btnStopTurn.disabled = true;
-      }
-      
-      // Update form values
-      if (data.parameters) {
-        $bitrate.value = data.parameters.bitrate;
-        $fps.value = data.parameters.fps;
-        $width.value = data.parameters.width;
-        $height.value = data.parameters.height;
-        $codec.value = data.parameters.codec;
-        $acodec.value = data.parameters.acodec || '';
-        $abitrate.value = data.parameters.abitrate || 128;
-        $turnUrl.value = data.parameters.turn_url;
-        $stunUrl.value = data.parameters.stun_url;
-      }
-    } catch (error) {
-      log('✗ Failed to fetch status: ' + error.message, 'error');
-    }
-  }
-  
-  async function startStreaming() {
-    const params = {
-      bitrate: parseInt($bitrate.value),
-      fps: parseInt($fps.value),
-      width: parseInt($width.value),
-      height: parseInt($height.value),
-      codec: $codec.value,
-      acodec: $acodec.value,
-      abitrate: parseInt($abitrate.value),
-      turn_url: $turnUrl.value,
-      stun_url: $stunUrl.value
-    };
+async function fetchStatus() {
+  try {
+    const response = await fetch(`${API_BASE}/status`);
+    const json = await response.json();
+    console.log("Status API: ", json)
     
-    try {
-      $streamLoading.classList.add('active');
-      $streamLoadingText.textContent = 'Starting stream...';
+    // Update stream badge
+    if (json.streaming_running) {
+      $serverStatus.className = 'badge badge-running';
+      $serverStatus.innerHTML = '<span>⬤</span><span>Stream Running</span>';
       $btnStartStream.disabled = true;
+      $btnStopStream.disabled = false;
+    } else {
+      $serverStatus.className = 'badge badge-stopped';
+      $serverStatus.innerHTML = '<span>⬤</span><span>Stream Stopped</span>';
+      $btnStartStream.disabled = false;
+      $btnStopStream.disabled = true;
+    }
+  } catch (e) {
+    // Server might not be available
+  }
+}
+
+async function startStreaming() {
+  try {
+      showLoading('Starting streaming server...');
+      log('🚀 Starting stream...', 'info');
       
-      const codecInfo = params.acodec ? `${params.codec.toUpperCase()} + ${params.acodec.toUpperCase()}` : params.codec.toUpperCase();
-      log(`🚀 Starting stream: ${codecInfo} @ ${params.bitrate}kbps...`, 'info');
+      // Build command line for logging
+      const commandArray = [
+          './StreamingProgram',
+          '--video-bitrate', currentConfig.video_bitrate.toString(),
+          '--video-fps', currentConfig.video_fps.toString(),
+          '--video-width', currentConfig.video_width.toString(),
+          '--video-height', currentConfig.video_height.toString(),
+          '--codec', currentConfig.codec,
+          '--vemode', currentConfig.vemode,
+          '--mtu', currentConfig.mtu.toString(),
+          '--intra', currentConfig.intra,
+          '--min-qp', currentConfig.min_qp.toString(),
+          '--audio-codec', currentConfig.audio_codec,
+          '--audio-bitrate', currentConfig.audio_bitrate.toString(),
+          '--turn', currentConfig.turn_url,
+          '--stun', currentConfig.stun_url,
+          '--client-ip', currentConfig.client_ip,
+          '--client-port', currentConfig.client_port.toString(),
+          '--server-port', currentConfig.server_port.toString(),
+          '--index', currentConfig.html_index,
+          '--enable-p2p', (currentConfig.enable_p2p ? 1 : 0).toString()
+      ];
       
+      const commandLine = commandArray.join(' ');
+      console.log('Command:', commandLine);
+      log('→ Starting StreamingProgram...', 'info');
+      
+      // Step 1: Start the streaming process
       const response = await fetch(`${API_BASE}/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params)
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentConfig)
       });
-      const data = await response.json();
       
-      if (data.success) {
-        log('✓ Streaming server started', 'success');
-      } else {
-        log('✗ Failed to start streaming: ' + data.message, 'error');
-        $btnStartStream.disabled = false;
+      if (!response.ok) {
+          hideLoading();
+          const errorMsg = `Server returned ${response.status}: ${response.statusText}`;
+          log('✗ Failed to start: ' + errorMsg, 'error');
+          showErrorAlert(errorMsg);
+          fetchStatus();
+          return;
       }
       
-      setTimeout(() => {
-        $streamLoading.classList.remove('active');
-        fetchStatus();
-      }, 1000);
+      const data = await response.json();
+      
+      if (!data.success) {
+          hideLoading();
+          log('✗ Failed to start streaming: ' + data.message, 'error');
+          showErrorAlert(data.message);
+          fetchStatus();
+          return;
+      }
+      
+      log('✓ StreamingProgram spawned, monitoring status...', 'info');
+      
+      // Step 2: Poll /api/status to check startup status
+      let pollCount = 0;
+      const maxPolls = 20; // 10 seconds total (20 * 500ms)
+      
+      const pollInterval = setInterval(async () => {
+        pollCount++;
+        try {
+            const statusResponse = await fetch(`${API_BASE}/status`);
+            if (!statusResponse.ok) {
+                clearInterval(pollInterval);
+                hideLoading();
+                log('✗ Failed to fetch status', 'error');
+                showErrorAlert('Failed to check streaming status');
+                fetchStatus();
+                return;
+            }
+            
+            const statusData = await statusResponse.json();
+            
+            console.log(`Poll ${pollCount}: startup_status="${statusData.startup_status}", streaming_running=${statusData.streaming_running}`);
+            
+            // Check if status has been determined
+            if (statusData.startup_status === 'error') {
+                // ERROR DETECTED!
+                clearInterval(pollInterval);
+                hideLoading();
+                
+                const errorMessage = statusData.startup_error_msg || 'Unknown error occurred';
+                log('❌ StreamingProgram failed to start:', 'error');
+                log('   ' + errorMessage, 'error');
+                
+                // Show alert with ACTUAL error message from API
+                showErrorAlert(errorMessage);
+                fetchStatus();
+                
+            } else if (statusData.streaming_running) {
+                // SUCCESS!
+                clearInterval(pollInterval);
+                hideLoading();
+                
+                log('✅ StreamingProgram is running successfully!', 'success');
+                showSuccessAlert();
+                fetchStatus();
+                
+            } else if (statusData.startup_status === 'stopped' || !statusData.streaming_running) {
+                // Process stopped/crashed
+                clearInterval(pollInterval);
+                hideLoading();
+                
+                const errorMessage = statusData.startup_error_msg || 'StreamingProgram stopped unexpectedly';
+                log('❌ StreamingProgram stopped:', 'error');
+                
+                showErrorAlert(errorMessage);
+                fetchStatus();
+                
+            } else if (pollCount >= maxPolls) {
+                // Timeout - still in "starting" state after 10 seconds
+                clearInterval(pollInterval);
+                hideLoading();
+                
+                log('⏱ Startup monitoring timeout', 'warning');
+                showErrorAlert('Startup monitoring timed out after 10 seconds.\n\nThe program may still be starting, or there may be an issue.');
+                fetchStatus();
+            }
+          } catch (error) {
+            clearInterval(pollInterval);
+            hideLoading();
+            log('✗ Error checking status: ' + error.message, 'error');
+            showErrorAlert('Error while monitoring startup:\n\n' + error.message);
+            fetchStatus();
+         }
+          
+      }, 500); // Poll every 500ms (fast polling during startup)
+      
     } catch (error) {
+      hideLoading();
       log('✗ Error starting streaming: ' + error.message, 'error');
-      $streamLoading.classList.remove('active');
-      $btnStartStream.disabled = false;
-    }
+      showErrorAlert('Unexpected error while starting stream:\n\n' + error.message);
+      fetchStatus();
   }
+}
+
+
+function formatErrorMessage(rawMessage) {
+    // Clean up the message (remove WARNING prefix and timestamps)
+    let cleanedMessage = rawMessage.trim();
+    
+    // Extract the actual error message (remove GLib warning prefix)
+    const warningMatch = cleanedMessage.match(/\*\* \(.*?\): WARNING \*\*: .*?: (.*)/);
+    if (warningMatch) {
+        cleanedMessage = warningMatch[1];
+    }
+    
+    // Common error patterns with user-friendly messages
+    const errorPatterns = [
+        {
+            pattern: /Could not detect video device/i,
+            friendlyMsg: '📹 Camera Not Detected\n\nThe system cannot find a video input device.\n\nPossible solutions:\n• Check if camera is connected\n• Verify camera permissions\n• Check /dev/video0 accessibility'
+        },
+        {
+            pattern: /Failed to create Encoder.*processing power.*insufficient/i,
+            friendlyMsg: '⚡ Insufficient Processing Power\n\nThe system does not have enough resources to encode the video.\n\nPossible solutions:\n• Lower video resolution (try 1920x1080)\n• Reduce video bitrate (try 3000 kbps)\n• Decrease frame rate (try 30 fps)\n• Close other applications'
+        },
+        {
+            pattern: /pipeline failed to reach play state|WebRTC pipeline failed/i,
+            friendlyMsg: '🎬 Pipeline Failed to Initialize\n\nThe video streaming pipeline could not start properly.\n\nPossible solutions:\n• Check encoder settings (codec, resolution)\n• Verify hardware acceleration is available\n• Try different video parameters\n• Review full error message below'
+        },
+        {
+            pattern: /Not enought resources/i,
+            friendlyMsg: '💻 System Resources Exhausted\n\nThe system is out of resources for video processing.\n\nPossible solutions:\n• Close other running applications\n• Reduce streaming quality settings\n• Restart the system'
+        }
+    ];
+    
+    // Check if message matches any known pattern
+    for (const errorPattern of errorPatterns) {
+        if (errorPattern.pattern.test(rawMessage)) {
+            return errorPattern.friendlyMsg + '\n\n━━━━━━━━━━━━━━━━━━━━\nFull Error:\n' + rawMessage.trim();
+        }
+    }
+    
+    // If no pattern matches, return cleaned message with generic header
+    return '⚠️ StreamingProgram Error\n\n' + cleanedMessage;
+}
   
   async function stopStreaming() {
     try {
-      $streamLoading.classList.add('active');
-      $streamLoadingText.textContent = 'Stopping stream...';
-      $btnStopStream.disabled = true;
-      
       log('🛑 Stopping streaming server...', 'info');
       const response = await fetch(`${API_BASE}/stop`, { method: 'POST' });
       const data = await response.json();
@@ -807,73 +2268,61 @@
         log('✗ Failed to stop streaming: ' + data.message, 'error');
       }
       
-      setTimeout(() => {
-        $streamLoading.classList.remove('active');
-        fetchStatus();
-      }, 1000);
+      fetchStatus();
     } catch (error) {
       log('✗ Error stopping streaming: ' + error.message, 'error');
-      $streamLoading.classList.remove('active');
-    }
-  }
-  
-  async function startTurn() {
-    try {
-      $turnLoading.classList.add('active');
-      $turnLoadingText.textContent = 'Starting TURN...';
-      $btnStartTurn.disabled = true;
-      
-      log('▶️ Starting TURN server...', 'info');
-      const response = await fetch(`${API_BASE}/turn/start`, { method: 'POST' });
-      const data = await response.json();
-      
-      if (data.success) {
-        log('✓ TURN server started', 'success');
-      } else {
-        log('✗ Failed to start TURN: ' + data.message, 'error');
-        $btnStartTurn.disabled = false;
-      }
-      
-      setTimeout(() => {
-        $turnLoading.classList.remove('active');
-        fetchStatus();
-      }, 1000);
-    } catch (error) {
-      log('✗ Error starting TURN: ' + error.message, 'error');
-      $turnLoading.classList.remove('active');
-      $btnStartTurn.disabled = false;
-    }
-  }
-  
-  async function stopTurn() {
-    try {
-      $turnLoading.classList.add('active');
-      $turnLoadingText.textContent = 'Stopping TURN...';
-      $btnStopTurn.disabled = true;
-      
-      log('⏹️ Stopping TURN server...', 'info');
-      const response = await fetch(`${API_BASE}/turn/stop`, { method: 'POST' });
-      const data = await response.json();
-      
-      if (data.success) {
-        log('✓ TURN server stopped', 'success');
-      } else {
-        log('✗ Failed to stop TURN: ' + data.message, 'error');
-      }
-      
-      setTimeout(() => {
-        $turnLoading.classList.remove('active');
-        fetchStatus();
-      }, 1000);
-    } catch (error) {
-      log('✗ Error stopping TURN: ' + error.message, 'error');
-      $turnLoading.classList.remove('active');
     }
   }
   
   // ============================================================================
-  // WebRTC Viewer
+  // WebRTC Functions
   // ============================================================================
+  
+  function showBlueScreen() {
+    $blueScreen.classList.remove('hidden');
+  }
+  
+  function hideBlueScreen() {
+    $blueScreen.classList.add('hidden');
+  }
+
+  function showLoading(message = 'Loading...') {
+    if ($loadingOverlay && $loadingText) {
+      $loadingText.textContent = message;
+      $loadingOverlay.classList.add('active');
+      // Hide other overlays
+      hideBusyScreen();
+      $tapToPlay.classList.remove('active');
+    }
+  }
+  
+  function hideLoading() {
+    if ($loadingOverlay) {
+      $loadingOverlay.classList.remove('active');
+    }
+  }
+  
+  function showBusyScreen() {
+    if ($busyScreen) {
+      $busyScreen.classList.add('active');
+      $blueScreen.classList.add('hidden');
+      log('⏳ Server busy. Please try again later.', 'warning');
+    }
+  }
+  
+  function hideBusyScreen() {
+    if ($busyScreen) {
+      $busyScreen.classList.remove('active');
+    }
+  }
+  
+  function clearVideo() {
+    showBlueScreen();
+    try {
+      $video.pause();
+      $video.srcObject = null;
+    } catch (e) {}
+  }
   
   function parseSDPForStreamInfo(sdp) {
     try {
@@ -900,99 +2349,168 @@
         const stats = await pc.getStats();
         
         stats.forEach(report => {
-          if (report.type === 'inbound-rtp' && report.kind === 'video') {
-            if (report.framesPerSecond) {
-              $statFps.textContent = Math.round(report.framesPerSecond);
-            }
-            
-            if (report.frameWidth && report.frameHeight) {
-              $statResolution.textContent = `${report.frameWidth}x${report.frameHeight}`;
-            }
-            
-            if (report.bytesReceived) {
-              const mb = (report.bytesReceived / (1024 * 1024)).toFixed(2);
-              $statDataReceived.textContent = `${mb} MB`;
-              
-              if (window.lastBytesReceived && window.lastTimestamp) {
-                const bytesDiff = report.bytesReceived - window.lastBytesReceived;
-                const timeDiff = report.timestamp - window.lastTimestamp;
-                const bitrate = Math.round((bytesDiff * 8) / (timeDiff / 1000) / 1000);
-                $statBitrate.textContent = `${bitrate} kbps`;
+          if (report.type === 'inbound-rtp') {
+            if (report.kind === 'video') {
+              if (report.framesPerSecond) {
+                $statFps.textContent = Math.round(report.framesPerSecond);
               }
               
-              window.lastBytesReceived = report.bytesReceived;
-              window.lastTimestamp = report.timestamp;
-            }
-            
-            if (report.packetsLost !== undefined) {
-              $statPacketsLost.textContent = report.packetsLost;
-            }
-            
-            if (report.jitter !== undefined) {
-              $statJitter.textContent = (report.jitter * 1000).toFixed(1) + ' ms';
-            }
-          }
-          
-          if (report.type === 'inbound-rtp' && report.kind === 'audio') {
-            if (report.bytesReceived) {
-              if (window.lastAudioBytesReceived && window.lastAudioTimestamp) {
-                const bytesDiff = report.bytesReceived - window.lastAudioBytesReceived;
-                const timeDiff = report.timestamp - window.lastAudioTimestamp;
-                const bitrate = Math.round((bytesDiff * 8) / (timeDiff / 1000) / 1000);
-                $statAudioBitrate.textContent = `${bitrate} kbps`;
+              if (report.frameWidth && report.frameHeight) {
+                $statResolution.textContent = `${report.frameWidth}x${report.frameHeight}`;
               }
               
-              window.lastAudioBytesReceived = report.bytesReceived;
-              window.lastAudioTimestamp = report.timestamp;
+              if (report.bytesReceived) {
+                const mb = (report.bytesReceived / (1024 * 1024)).toFixed(2);
+                $statDataReceived.textContent = `${mb} MB`;
+                
+                if (window.lastBytesReceived && window.lastTimestamp) {
+                  const bytesDiff = report.bytesReceived - window.lastBytesReceived;
+                  const timeDiff = report.timestamp - window.lastTimestamp;
+                  const bitrate = Math.round((bytesDiff * 8) / (timeDiff / 1000) / 1000);
+                  $statBitrate.textContent = `${bitrate} kbps`;
+                }
+                
+                window.lastBytesReceived = report.bytesReceived;
+                window.lastTimestamp = report.timestamp;
+              }
+              
+              if (report.packetsLost !== undefined) {
+                $statPacketsLost.textContent = report.packetsLost;
+              }
+              
+              if (report.jitter !== undefined) {
+                $statJitter.textContent = `${Math.round(report.jitter * 1000)} ms`;
+              }
+            } else if (report.kind === 'audio') {
+              // Audio stats
+              if (report.bytesReceived !== undefined) {
+                if (window.lastAudioBytesReceived !== undefined && window.lastAudioTimestamp !== undefined) {
+                  const bytesDiff = report.bytesReceived - window.lastAudioBytesReceived;
+                  const timeDiff = (report.timestamp - window.lastAudioTimestamp) / 1000;
+                  if (timeDiff > 0) {
+                    const bitrate = Math.round((bytesDiff * 8) / timeDiff / 1000);
+                    $statAudioBitrate.textContent = `${bitrate} kbps`;
+                  }
+                }
+                
+                window.lastAudioBytesReceived = report.bytesReceived;
+                window.lastAudioTimestamp = report.timestamp;
+              }
             }
           }
         });
-      } catch (e) {}
+      } catch (e) {
+        console.error('Stats error:', e);
+      }
     }, 1000);
   }
   
   function setupPeerConnection() {
     try {
-      let config = { ...ICE_CONFIG };
+      console.log('Setting up PeerConnection with webrtcConfig:', webrtcConfig);
       
-      if ($forceRelay && $forceRelay.checked) {
-        config.iceTransportPolicy = "relay";
-        log('🔒 Force Relay enabled', 'info');
+      // FIX: Build ICE servers configuration - STUN/TURN are now optional for LAN mode
+      const iceServers = [];
+      
+      // Add STUN server if provided (optional for LAN)
+      if (webrtcConfig.stun_url && webrtcConfig.stun_url.trim() !== '') {
+        iceServers.push({ urls: webrtcConfig.stun_url });
+        log('Using STUN: ' + webrtcConfig.stun_url, 'info');
       } else {
-        log('🌐 ICE configured: STUN/TURN available', 'info');
+        log('No STUN server configured (LAN mode)', 'info');
       }
       
-      pc = new RTCPeerConnection(config);
+      // Add TURN server if provided (optional for LAN)
+      if (webrtcConfig.turn_url && webrtcConfig.turn_url.trim() !== '') {
+        // Parse TURN URL: turn://username:password@host:port
+        const turnMatch = webrtcConfig.turn_url.match(/^(turn|turns):\/\/([^:]+):([^@]+)@(.+)$/);
+        if (turnMatch) {
+          const [, protocol, username, credential, hostPort] = turnMatch;
+          iceServers.push({
+            urls: `${protocol}:${hostPort}`,
+            username: username,
+            credential: credential
+          });
+          log('Using TURN: ' + `${protocol}:${hostPort}`, 'info');
+          log('  Username: ' + username, 'info');
+        } else {
+          log('⚠ Invalid TURN URL format', 'warning');
+        }
+      } else {
+        log('No TURN server configured (LAN mode)', 'info');
+      }
+      
+      const configuration = {
+        iceServers: iceServers.length > 0 ? iceServers : undefined
+      };
+      
+      // Handle force relay
+      if ($forceRelay.checked) {
+        configuration.iceTransportPolicy = 'relay';
+        log('🔒 Force Relay enabled', 'info');
+      }
+      
+      console.log('Full RTCPeerConnection configuration:', JSON.stringify(configuration, null, 2));
+      
+      pc = new RTCPeerConnection(configuration);
       log('✓ PeerConnection created', 'success');
       
-      pc.ontrack = (ev) => {
-        log(`✓ Remote ${ev.track.kind} track received`, 'success');
+      pc.ontrack = (event) => {
+        log('✓ Track received: ' + event.track.kind, 'success');
         
         if (!remoteStream) {
           remoteStream = new MediaStream();
+          $video.srcObject = remoteStream;
         }
         
-        remoteStream.addTrack(ev.track);
-        $video.srcObject = remoteStream;
+        remoteStream.addTrack(event.track);
         
-        $video.play().catch(e => log('⚠ Play error: ' + e.message, 'warning'));
+        if (event.track.kind === 'video') {
+          $video.play()
+            .then(() => hideBlueScreen())
+            .catch(e => log('⚠ Play error: ' + e.message, 'warning'));
+        }
       };
       
-      pc.onicecandidate = (ev) => {
-        if (!ev.candidate) {
-          log('✓ ICE gathering complete', 'success');
-          return;
-        }
-        
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ 
-            type: 'ice', 
+      pc.onicecandidate = (event) => {
+        if (event.candidate && ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'ice',
             data: {
-              candidate: ev.candidate.candidate,
-              sdpMLineIndex: ev.candidate.sdpMLineIndex,
-              sdpMid: ev.candidate.sdpMid
+              candidate: event.candidate.candidate,
+              sdpMLineIndex: event.candidate.sdpMLineIndex,
+              sdpMid: event.candidate.sdpMid
             }
           }));
+          log('→ ICE candidate sent', 'info');
+        }
+      };
+      
+      pc.oniceconnectionstatechange = () => {
+        log('ICE state: ' + pc.iceConnectionState, 'info');
+        
+        if (pc.iceConnectionState === 'connected') {
+          log('✓ ICE connected', 'success');
+          
+        } else if (pc.iceConnectionState === 'disconnected') {
+          log('⚠ ICE disconnected', 'warning');
+          // Don't immediately cleanup - wait for connection state to handle it
+          
+        } else if (pc.iceConnectionState === 'failed') {
+          hideLoading();
+          log('✗ ICE connection failed', 'error');
+          
+          // Only cleanup if not already in progress
+          if (!intentionalDisconnect && !cleanupInProgress) {
+            clearVideo();
+            $btnConnect.disabled = false;
+            $btnDisconnect.disabled = true;
+            $btnShowStats.disabled = true;
+          }
+          
+        } else if (pc.iceConnectionState === 'closed') {
+          log('ICE connection closed', 'info');
+          // Let connection state handler deal with this
         }
       };
       
@@ -1000,7 +2518,18 @@
         log('Connection state: ' + pc.connectionState, 'info');
         
         if (pc.connectionState === 'connected') {
+          hideLoading();
           log('✓ WebRTC connection established!', 'success');
+          hideBlueScreen();
+          isConnected = true;
+          isConnecting = false;
+          
+          // Clear connection timeout since we're connected
+          if (connectionTimeout) {
+            clearTimeout(connectionTimeout);
+            connectionTimeout = null;
+          }
+          
           $btnConnect.disabled = true;
           $btnDisconnect.disabled = false;
           $btnShowStats.disabled = false;
@@ -1024,16 +2553,37 @@
           startStatsMonitoring();
           
         } else if (pc.connectionState === 'failed') {
+          hideLoading();
           log('✗ Connection failed', 'error');
-          $btnConnect.disabled = false;
-          $btnDisconnect.disabled = true;
-          $btnShowStats.disabled = true;
+          
+          // Only cleanup if we're not intentionally disconnecting
+          if (!intentionalDisconnect && !cleanupInProgress) {
+            clearVideo();
+            $btnConnect.disabled = false;
+            $btnDisconnect.disabled = true;
+            $btnShowStats.disabled = true;
+          }
           
         } else if (pc.connectionState === 'disconnected') {
           log('⚠ Connection disconnected', 'warning');
-          $btnConnect.disabled = false;
-          $btnDisconnect.disabled = true;
-          $btnShowStats.disabled = true;
+          
+          // Give it time to reconnect before cleaning up
+          // Only cleanup if intentional or after timeout
+          if (intentionalDisconnect && !cleanupInProgress) {
+            clearVideo();
+            $btnConnect.disabled = false;
+            $btnDisconnect.disabled = true;
+            $btnShowStats.disabled = true;
+          } else if (!intentionalDisconnect) {
+            log('⏳ Waiting for reconnection...', 'info');
+          }
+          
+        } else if (pc.connectionState === 'closed') {
+          log('Connection closed', 'info');
+          
+          if (!cleanupInProgress) {
+            clearVideo();
+          }
         }
       };
       
@@ -1045,8 +2595,46 @@
     }
   }
   
+  // FIX: Process buffered ICE candidates after remote description is set
+  async function processBufferedIceCandidates() {
+    if (pendingIceCandidates.length === 0) return;
+    
+    log(`📦 Processing ${pendingIceCandidates.length} buffered ICE candidates`, 'info');
+    
+    for (const candidate of pendingIceCandidates) {
+      try {
+        await pc.addIceCandidate(candidate);
+        log('✓ Buffered ICE candidate added', 'success');
+      } catch (e) {
+        log('⚠ Failed to add buffered ICE: ' + e.message, 'warning');
+      }
+    }
+    
+    pendingIceCandidates = [];
+  }
+  
   function cleanup() {
+    // Prevent multiple simultaneous cleanups
+    if (cleanupInProgress) {
+      log('⚠ Cleanup already in progress, skipping...', 'warning');
+      return;
+    }
+    
+    cleanupInProgress = true;
+    hideLoading();
     log('🧹 Cleaning up viewer...', 'info');
+    hideBusyScreen();
+    
+    // Clear connection timeout if exists
+    if (connectionTimeout) {
+      clearTimeout(connectionTimeout);
+      connectionTimeout = null;
+      log('✓ Connection timeout cleared', 'success');
+    }
+    
+    // Reset connection states
+    isConnecting = false;
+    isConnected = false;
     
     if (pc) {
       try { 
@@ -1054,7 +2642,10 @@
         pc.onicecandidate = null;
         pc.onconnectionstatechange = null;
         pc.close();
-      } catch (e) {}
+        log('✓ PeerConnection closed', 'success');
+      } catch (e) {
+        log('⚠ Error closing PeerConnection: ' + e.message, 'warning');
+      }
       pc = null;
     }
     
@@ -1064,13 +2655,17 @@
           track.stop();
           remoteStream.removeTrack(track);
         });
-      } catch (e) {}
+        log('✓ Remote stream stopped', 'success');
+      } catch (e) {
+        log('⚠ Error stopping stream: ' + e.message, 'warning');
+      }
       remoteStream = null;
     }
     
     if (statsInterval) {
       clearInterval(statsInterval);
       statsInterval = null;
+      log('✓ Stats interval cleared', 'success');
     }
     
     $statCodec.textContent = '—';
@@ -1089,10 +2684,20 @@
     window.lastAudioBytesReceived = null;
     window.lastAudioTimestamp = null;
     
+    // FIX: Reset ICE candidate queue
+    pendingIceCandidates = [];
+    remoteDescriptionSet = false;
+    
     try { 
       $video.pause();
       $video.srcObject = null;
-    } catch (e) {}
+      $video.load();
+      log('✓ Video element cleared', 'success');
+    } catch (e) {
+      log('⚠ Error clearing video: ' + e.message, 'warning');
+    }
+    
+    showBlueScreen();
     
     if (ws) {
       try { 
@@ -1100,40 +2705,91 @@
         ws.onclose = null;
         ws.onerror = null;
         ws.onmessage = null;
-        ws.close(); 
-      } catch (e) {}
+        ws.close();
+        log('✓ WebSocket closed', 'success');
+      } catch (e) {
+        log('⚠ Error closing WebSocket: ' + e.message, 'warning');
+      }
       ws = null;
     }
+    
+    cleanupInProgress = false;
+    log('✓ Cleanup completed', 'success');
   }
   
   function connectToStream() {
+    showLoading('Starting streaming server...');
     log('🎯 Connecting to stream...', 'info');
+    console.log('Using webrtcConfig:', webrtcConfig);
+    
+    // Mark this as an intentional connection attempt
+    intentionalDisconnect = false;
+    isConnecting = true;
+    isConnected = false;
     
     cleanup();
     
-    ws = new WebSocket(WS_URL);
-    
-    ws.onopen = () => {
-      log('✓ WebSocket connected', 'success');
-      
-      if (!setupPeerConnection()) {
-        log('✗ Failed to setup PeerConnection', 'error');
+    // Set connection timeout - if not connected within 10 seconds, abort
+    connectionTimeout = setTimeout(() => {
+      if (isConnecting && !isConnected) {
+        hideLoading();
+        log('⏱ Connection timeout after 10 seconds', 'error');
+        log('❌ Failed to establish stream. Please try again.', 'error');
+        intentionalDisconnect = true;
+        cleanup();
         $btnConnect.disabled = false;
         $btnDisconnect.disabled = true;
-        return;
+        $btnShowStats.disabled = true;
       }
-    };
+    }, CONNECTION_TIMEOUT_MS);
     
-    ws.onclose = () => {
-      log('WebSocket disconnected', 'warning');
+    try {
+      ws = new WebSocket(WS_URL);
+      
+      ws.onopen = () => {
+        showLoading();
+        log('✓ WebSocket connected', 'success');
+        log('⏳ Waiting for stream offer...', 'info');
+        isConnecting = true;
+      };
+      
+      ws.onclose = (event) => {
+        log(`WebSocket disconnected (code: ${event.code}, reason: ${event.reason || 'none'})`, 'warning');
+        
+        // Only cleanup if not already in progress and not already disconnected
+        if (!cleanupInProgress && (isConnecting || isConnected)) {
+          clearVideo();
+          $btnConnect.disabled = false;
+          $btnDisconnect.disabled = true;
+          $btnShowStats.disabled = true;
+        }
+      };
+      
+      ws.onerror = (err) => {
+        hideLoading();
+        log('✗ WebSocket connection error: ' + err.type, 'error');
+        log('Failed to connect to signaling server at ' + WS_URL, 'error');
+        
+        // Re-enable connect button on error
+        $btnConnect.disabled = false;
+        $btnDisconnect.disabled = true;
+        $btnShowStats.disabled = true;
+        
+        // Only cleanup if not already in progress
+        if (!cleanupInProgress && (isConnecting || isConnected)) {
+          clearVideo();
+        }
+      };
+      
+    } catch (e) {
+      hideLoading();
+      log('✗ Failed to create WebSocket: ' + e.message, 'error');
       $btnConnect.disabled = false;
       $btnDisconnect.disabled = true;
       $btnShowStats.disabled = true;
-    };
-    
-    ws.onerror = (err) => {
-      log('✗ WebSocket error: ' + err.type, 'error');
-    };
+      cleanup();
+      return;
+    }
     
     ws.onmessage = async (ev) => {
       let data = null;
@@ -1145,12 +2801,28 @@
       }
       
       switch (data.type) {
+        
+        case 'status':
+          if (data.status === 'busy') {
+            showBusyScreen();
+            hideLoading();
+            if (ws) {
+              ws.close();
+              ws = null;
+            }
+            $btnConnect.disabled = false;
+            $btnDisconnect.disabled = true;
+          }
+          break;
+          
         case 'sdp':
           if (data.data && data.data.type === 'offer') {
             log('✓ Offer received from server', 'success');
+            showLoading('Negotiating connection...');
             
             if (!pc) {
               if (!setupPeerConnection()) {
+                hideLoading();
                 log('✗ Failed to setup PeerConnection', 'error');
                 return;
               }
@@ -1161,8 +2833,15 @@
                 parseSDPForStreamInfo(data.data.sdp);
               }
               
+              // FIX: Set remote description FIRST
               await pc.setRemoteDescription(new RTCSessionDescription(data.data));
               log('✓ Remote description set', 'success');
+              
+              // FIX: Mark that remote description is now set
+              remoteDescriptionSet = true;
+              
+              // FIX: Process any buffered ICE candidates AFTER setting remote description
+              await processBufferedIceCandidates();
               
               const answer = await pc.createAnswer();
               await pc.setLocalDescription(answer);
@@ -1174,17 +2853,37 @@
                   data: answer
                 }));
                 log('→ Answer sent to server', 'info');
+                showLoading('Negotiating connection...');
               }
               
             } catch (e) {
+              hideLoading();
               log('✗ Negotiation error: ' + e.message, 'error');
+              console.error('Full negotiation error:', e);
+              
+              // iOS-specific error hints
+              if (e.message.includes('InvalidStateError')) {
+                log('💡 Try refreshing the page and reconnecting', 'info');
+              } else if (e.message.includes('OperationError')) {
+                log('💡 This may be a codec compatibility issue', 'info');
+              }
             }
           }
           break;
           
         case 'ice':
           if (data.data && data.data.candidate) {
-            if (pc && pc.remoteDescription) {
+            // FIX: CRITICAL - Buffer ICE candidates if remote description not yet set
+            if (!remoteDescriptionSet || !pc || !pc.remoteDescription) {
+              const candidate = new RTCIceCandidate({
+                candidate: data.data.candidate,
+                sdpMLineIndex: data.data.sdpMLineIndex,
+                sdpMid: data.data.sdpMid
+              });
+              pendingIceCandidates.push(candidate);
+              log(`📦 Buffering ICE candidate (waiting for remote description), queue: ${pendingIceCandidates.length}`, 'info');
+            } else {
+              // Remote description is set, add ICE candidate immediately
               try { 
                 await pc.addIceCandidate(new RTCIceCandidate({
                   candidate: data.data.candidate,
@@ -1201,29 +2900,150 @@
       }
     };
   }
+  // ============================================================================
+  // Codec Detection
+  // ============================================================================
+  
+  function detectCodecSupport() {
+    log('🔍 Detecting codec support...', 'info');
+    
+    try {
+      // Check if RTCRtpReceiver.getCapabilities is supported
+      if (!RTCRtpReceiver.getCapabilities) {
+        log('⚠ RTCRtpReceiver.getCapabilities not supported', 'warning');
+        updateCodecBadge($codecBadgeH264, 'unknown', 'H.264', 'Unknown');
+        updateCodecBadge($codecBadgeH265, 'unknown', 'H.265', 'Unknown');
+        return;
+      }
+      
+      const capabilities = RTCRtpReceiver.getCapabilities('video');
+      
+      if (!capabilities || !capabilities.codecs) {
+        log('⚠ Could not retrieve video codecs', 'warning');
+        updateCodecBadge($codecBadgeH264, 'unknown', 'H.264', 'Unknown');
+        updateCodecBadge($codecBadgeH265, 'unknown', 'H.265', 'Unknown');
+        return;
+      }
+      
+      // Check for H.264 support
+      const h264Supported = capabilities.codecs.some(codec => {
+        const mimeType = codec.mimeType.toLowerCase();
+        return mimeType.includes('h264') || mimeType.includes('avc');
+      });
+      
+      // Check for H.265 support
+      const h265Supported = capabilities.codecs.some(codec => {
+        const mimeType = codec.mimeType.toLowerCase();
+        return mimeType.includes('h265') || mimeType.includes('hevc');
+      });
+      
+      // Update badges
+      if (h264Supported) {
+        updateCodecBadge($codecBadgeH264, 'supported', 'H.264', 'Supported');
+        log('✓ H.264 codec supported', 'success');
+      } else {
+        updateCodecBadge($codecBadgeH264, 'not-supported', 'H.264', 'Not Supported');
+        log('✗ H.264 codec not supported', 'error');
+      }
+      
+      if (h265Supported) {
+        updateCodecBadge($codecBadgeH265, 'supported', 'H.265', 'Supported');
+        log('✓ H.265 codec supported', 'success');
+      } else {
+        updateCodecBadge($codecBadgeH265, 'not-supported', 'H.265', 'Not Supported');
+        log('✗ H.265 codec not supported', 'warning');
+      }
+      
+      // Log additional codec info
+      console.log('Available video codecs:', capabilities.codecs.map(c => c.mimeType));
+      
+    } catch (e) {
+      log('✗ Error detecting codecs: ' + e.message, 'error');
+      updateCodecBadge($codecBadgeH264, 'unknown', 'H.264', 'Unknown');
+      updateCodecBadge($codecBadgeH265, 'unknown', 'H.265', 'Unknown');
+    }
+}
+  
+  function updateCodecBadge(badgeElement, status, codecName, statusText) {
+    if (!badgeElement) return;
+    
+    // Remove all status classes
+    badgeElement.classList.remove('codec-badge-checking', 'codec-badge-supported', 'codec-badge-not-supported', 'codec-badge-unknown');
+    
+    // Add appropriate class
+    if (status === 'supported') {
+      badgeElement.classList.add('codec-badge-supported');
+      badgeElement.querySelector('.codec-icon').textContent = '✓';
+    } else if (status === 'not-supported') {
+      badgeElement.classList.add('codec-badge-not-supported');
+      badgeElement.querySelector('.codec-icon').textContent = '✗';
+    } else {
+      badgeElement.classList.add('codec-badge-unknown');
+      badgeElement.querySelector('.codec-icon').textContent = '❓';
+    }
+    
+    // Update status text
+    badgeElement.querySelector('.codec-status').textContent = statusText;
+  }
   
   // ============================================================================
   // Event Listeners
   // ============================================================================
   
+  // Config modal
+  $btnEditConfig.addEventListener('click', () => {
+    $configModal.classList.add('active');
+  });
+  
+  $closeConfigModal.addEventListener('click', () => {
+    $configModal.classList.remove('active');
+  });
+  
+  $btnCancelConfig.addEventListener('click', () => {
+    $configModal.classList.remove('active');
+  });
+  
+  $btnSaveConfig.addEventListener('click', saveConfig);
+  
+  $configModal.addEventListener('click', (e) => {
+    if (e.target === $configModal) {
+      $configModal.classList.remove('active');
+    }
+  });
+  
+  // Stream control
   $btnStartStream.addEventListener('click', startStreaming);
   $btnStopStream.addEventListener('click', stopStreaming);
-  $btnStartTurn.addEventListener('click', startTurn);
-  $btnStopTurn.addEventListener('click', stopTurn);
   
+  // Cancel queue button
+  if ($btnGoBack) {
+    $btnGoBack.addEventListener('click', () => {
+      log('Going back...', 'info');
+      intentionalDisconnect = true;
+      cleanup();
+      $btnConnect.disabled = false;
+      $btnDisconnect.disabled = true;
+      $btnShowStats.disabled = true;
+    });
+  }
+  
+  // WebRTC control
   $btnConnect.addEventListener('click', () => {
     $btnConnect.disabled = true;
     $btnDisconnect.disabled = true;
+    intentionalDisconnect = false;
     connectToStream();
   });
   
   $btnDisconnect.addEventListener('click', () => {
+    intentionalDisconnect = true;
     cleanup();
     $btnConnect.disabled = false;
     $btnDisconnect.disabled = true;
     $btnShowStats.disabled = true;
   });
   
+  // Stats modal
   $btnShowStats.addEventListener('click', () => {
     $statsModal.classList.add('active');
   });
@@ -1238,15 +3058,53 @@
     }
   });
   
-  // ============================================================================
-  // Initialize
-  // ============================================================================
+  // Detect browser and capabilities
+  const userAgent = navigator.userAgent;
+  const isIOSSafari = /iP(ad|od|hone)/i.test(userAgent) && /WebKit/i.test(userAgent);
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
   
   log('📡 Control Panel Ready', 'success');
+  console.log("Agen: ",userAgent);
+  
+  // Browser detection
+  if (isIOSSafari) {
+    const iOSVersion = userAgent.match(/OS (\d+)_/);
+    if (iOSVersion) {
+      log('📱 iOS ' + iOSVersion[1] + ' detected', 'info');
+    } else {
+      log('📱 iOS Safari detected', 'info');
+    }
+  } else if (isMobile) {
+    log('📱 Mobile browser detected', 'info');
+  }
+  
+  // WebRTC capability check
+  if (!window.RTCPeerConnection) {
+    log('❌ WebRTC not supported in this browser!', 'error');
+  } else {
+    log('✓ WebRTC supported', 'success');
+  }
+  
+  // Detect codec support
+  detectCodecSupport();
+  
+  // HTTPS check for iOS
+  if (isIOSSafari && location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    log('⚠️ WARNING: iOS requires HTTPS for WebRTC!', 'warning');
+    log('💡 Try accessing via HTTPS or use localhost', 'info');
+  }
+  
   log('WebSocket: ' + WS_URL, 'info');
   
+  // Show blue screen by default
+  showBlueScreen();
+  
+  // Load configuration
+  loadConfigFromServer();
+  
+  // Fetch status periodically
   fetchStatus();
-  setInterval(fetchStatus, 3000);
+  // setInterval(fetchStatus, 3000);
 })();
 </script>
 </body>
