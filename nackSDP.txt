@@ -1,0 +1,63 @@
+Sending offer (after modification):
+v=0
+o=- 5564588199725741434 0 IN IP4 0.0.0.0
+s=-
+t=0 0
+a=ice-options:trickle
+a=group:BUNDLE video0
+m=video 9 UDP/TLS/RTP/SAVPF 96 97
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=ice-ufrag:5UKx7VOEbW6/RVvAhUUxqaFrrsfxPYYo
+a=ice-pwd:b3YcJlPbBjrgMkydwZ/P7WXUHVCiKRil
+a=rtcp-mux
+a=rtcp-rsize
+a=sendonly
+a=rtpmap:96 H265/90000
+a=rtcp-fb:96 nack
+a=rtcp-fb:96 nack pli
+a=framerate:60
+a=fmtp:96 sprop-vps=QAEMAf//AUAAAAMAkAAAAwAAAwB7JQJA;sprop-sps=QgEBAUAAAAMAkAAAAwAAAwB7oAPAgBDlnpbkSheAtQECAuEAAAMAAQAAAwA8UBf94QAAmJaAA9Cd8IBB;sprop-pps=RAHAc8Dm2Q==
+a=rtpmap:97 rtx/90000
+a=fmtp:97 apt=96
+a=ssrc-group:FID 1786209698 224200239
+a=ssrc:1786209698 msid:user2389323514@host-71799a2f webrtctransceiver0
+a=ssrc:1786209698 cname:user2389323514@host-71799a2f
+a=ssrc:224200239 msid:user2389323514@host-71799a2f webrtctransceiver0
+a=ssrc:224200239 cname:user2389323514@host-71799a2f
+a=mid:video0
+a=fingerprint:sha-256 F0:A9:48:3E:09:C6:E1:02:9A:E8:4D:C8:F5:07:E2:30:37:2A:79:FD:23:85:B6:E1:8B:46:87:4C:D4:84:81:57
+
+
+? SDP Verification:
+? SDP contains 'a=rtcp-fb:96 nack' (generic NACK)
+? SDP contains 'a=rtcp-fb:96 nack pli'
+? SDP contains RTX payload type
+? SDP contains 'a=rtpmap:97 rtx/90000'
+? SDP contains 'a=fmtp:97 apt=96' (RTX association)
+
+Received SDP:
+v=0
+o=- 1849321146648686911 2 IN IP4 127.0.0.1
+s=-
+t=0 0
+a=group:BUNDLE video0
+a=msid-semantic: WMS
+m=video 9 UDP/TLS/RTP/SAVPF 96 97
+c=IN IP4 0.0.0.0
+a=rtcp:9 IN IP4 0.0.0.0
+a=ice-ufrag:S4ig
+a=ice-pwd:dMdp9wItYt9L63tw9aLdYYAj
+a=ice-options:trickle
+a=fingerprint:sha-256 97:CF:39:C0:9A:07:57:FC:47:25:38:7B:73:6C:FD:3B:FF:5A:79:42:48:95:C5:85:51:95:52:7C:EE:F2:F9:27
+a=setup:active
+a=mid:video0
+a=recvonly
+a=rtcp-mux
+a=rtcp-rsize
+a=rtpmap:96 H265/90000
+a=rtcp-fb:96 nack
+a=rtcp-fb:96 nack pli
+a=fmtp:96 level-id=93;profile-id=1;tier-flag=0;tx-mode=SRST
+a=rtpmap:97 rtx/90000
+a=fmtp:97 apt=96
