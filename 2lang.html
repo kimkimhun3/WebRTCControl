@@ -1,0 +1,3432 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WebRTC Control</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    /* Theme Variables */
+    :root {
+      /* Dark Theme (Default) */
+      --bg-primary: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --bg-card: rgba(30, 41, 59, 0.8);
+      --bg-input: rgba(15, 23, 42, 0.6);
+      --bg-item: rgba(30, 41, 59, 0.4);
+      --bg-hover: rgba(59, 130, 246, 0.05);
+      
+      --border-primary: rgba(148, 163, 184, 0.1);
+      --border-secondary: rgba(148, 163, 184, 0.2);
+      
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-accent: #60a5fa;
+      --text-title: #f1f5f9;
+      
+      --accent-primary: #3b82f6;
+      --accent-secondary: #2563eb;
+      --success-primary: #10b981;
+      --success-secondary: #059669;
+      --danger-primary: #ef4444;
+      --danger-secondary: #dc2626;
+      
+      --badge-running-bg: rgba(16, 185, 129, 0.2);
+      --badge-running-color: #34d399;
+      --badge-running-border: rgba(16, 185, 129, 0.3);
+      
+      --badge-stopped-bg: rgba(239, 68, 68, 0.2);
+      --badge-stopped-color: #fca5a5;
+      --badge-stopped-border: rgba(239, 68, 68, 0.3);
+      
+      --modal-bg: rgba(0, 0, 0, 0.8);
+      --modal-content: rgba(30, 41, 59, 0.95);
+      
+      --blue-screen: #1e40af;
+      --busy-screen: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%);
+    }
+    
+    /* Light Theme */
+    [data-theme="light"] {
+      --bg-primary: linear-gradient(135deg, #e3dfd0 0%, #d9d5c3 100%);
+      --bg-card: rgba(255, 255, 255, 0.9);
+      --bg-input: rgba(255, 255, 255, 0.95);
+      --bg-item: rgba(248, 248, 248, 0.95);
+      --bg-hover: rgba(57, 73, 171, 0.05);
+      
+      --border-primary: rgba(57, 73, 171, 0.15);
+      --border-secondary: rgba(57, 73, 171, 0.2);
+      
+      --text-primary: #2c2c2c;
+      --text-secondary: #666666;
+      --text-accent: #3949ab;
+      --text-title: #1a1a1a;
+      
+      --accent-primary: #1e40af;
+      --accent-secondary: #1976d2;
+      --success-primary: #4caf50;
+      --success-secondary: #388e3c;
+      --danger-primary: #f44336;
+      --danger-secondary: #d32f2f;
+      
+      --badge-running-bg: rgba(76, 175, 80, 0.15);
+      --badge-running-color: #2e7d32;
+      --badge-running-border: rgba(76, 175, 80, 0.4);
+      
+      --badge-stopped-bg: rgba(244, 67, 54, 0.15);
+      --badge-stopped-color: #c62828;
+      --badge-stopped-border: rgba(244, 67, 54, 0.4);
+      
+      --modal-bg: rgba(0, 0, 0, 0.6);
+      --modal-content: rgba(255, 255, 255, 0.98);
+      
+      --blue-screen: #1e40af;
+      --busy-screen: linear-gradient(135deg, rgba(244, 67, 54, 0.95) 0%, rgba(211, 47, 47, 0.95) 100%);
+    }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
+      padding: 9px; 
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    
+    .container { max-width: 1600px; margin: 0 auto; }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+    }
+    
+    h1 { font-size: clamp(16px, 4vw, 24px); color: var(--text-title); }
+    
+    /* Theme Toggle Switch */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-secondary);
+      border-radius: 7px;
+      padding: 3px 7px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle:hover {
+      border-color: var(--text-accent);
+    }
+    
+    .theme-icon {
+      font-size: 15px;
+      transition: transform 0.3s ease;
+    }
+    
+    .theme-toggle:hover .theme-icon {
+      transform: rotate(20deg);
+    }
+    
+    .theme-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .status-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .badge { 
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px; 
+      border-radius: 6px; 
+      font-size: 10px; 
+      font-weight: 600; 
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+    }
+    
+    .badge-running {
+      background: var(--badge-running-bg);
+      color: var(--badge-running-color);
+      border: 1px solid var(--badge-running-border);
+    }
+    
+    .badge-stopped {
+      background: var(--badge-stopped-bg);
+      color: var(--badge-stopped-color);
+      border: 1px solid var(--badge-stopped-border);
+    }
+    
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-primary);
+      border-radius: 12px;
+      padding: 9px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .card-title { 
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 10px; 
+      color: var(--text-accent);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .grid { display: grid; gap: 9px; }
+    
+    @media (min-width: 1024px) {
+      .grid-2 { grid-template-columns: 1fr 2.7fr; }
+    }
+    
+    .form-row {
+      display: grid;
+      gap: 9px;
+      margin-bottom: 12px;
+    }
+    
+    /* Responsive form rows */
+    @media (min-width: 640px) {
+      .form-row { grid-template-columns: repeat(2, 1fr); }
+      .form-row-3 { grid-template-columns: repeat(3, 1fr); }
+      .form-row-4 { grid-template-columns: repeat(4, 1fr); }
+    }
+    
+    .form-group { margin-bottom: 12px; }
+    
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border-secondary);
+      border-radius: 6px;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: 'SF Mono', Monaco, monospace;
+      transition: all 0.3s ease;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    input:disabled, select:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+      white-space: nowrap;
+      min-height: 44px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, var(--success-primary) 0%, var(--success-secondary) 100%);
+      color: white;
+    }
+    
+    .btn-success:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-success:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, var(--danger-primary) 0%, var(--danger-secondary) 100%);
+      color: white;
+    }
+    
+    .btn-danger:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+    
+    .btn-danger:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
+    .btn-secondary {
+      background: rgba(100, 116, 139, 0.2);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-secondary);
+    }
+    
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      min-height: 40px;
+      padding: 0;
+      border-radius: 50%;
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--text-accent);
+      border: 1px solid var(--border-secondary);
+    }
+    
+    .btn-icon:hover:not(:disabled) {
+      background: rgba(59, 130, 246, 0.3);
+      transform: scale(1.05);
+    }
+    
+    .btn-edit {
+      padding: 8px 14px;
+      font-size: 12px;
+      min-height: 36px;
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--text-accent);
+      border: 1px solid var(--border-secondary);
+    }
+    
+    .btn-edit:hover:not(:disabled) {
+      background: rgba(59, 130, 246, 0.3);
+    }
+    
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .video-container {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+    }
+    
+    /* Fullscreen styles */
+    .video-container:fullscreen {
+      border-radius: 0;
+    }
+    
+    .video-container:-webkit-full-screen {
+      border-radius: 0;
+    }
+    
+    .video-container:-moz-full-screen {
+      border-radius: 0;
+    }
+    
+    .video-container:-ms-fullscreen {
+      border-radius: 0;
+    }
+    
+    video {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16/9;
+      background: #000;
+      outline: none;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .video-container:fullscreen video,
+    .video-container:-webkit-full-screen video {
+      width: 100%;
+      height: 100%;
+      aspect-ratio: unset;
+    }
+    
+    /* Blue Screen Overlay */
+    .blue-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--blue-screen);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: opacity 0.3s ease;
+    }
+    
+    .blue-screen.hidden {
+      display: none;
+    }
+    
+    /* Busy Screen Overlay */
+    .busy-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--busy-screen);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .busy-screen.active { display: flex; }
+    
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    .busy-icon { 
+      font-size: clamp(48px, 10vw, 64px); 
+      margin-bottom: 16px; 
+      animation: pulse 2s ease-in-out infinite; 
+    }
+    
+    .busy-title { 
+      font-size: clamp(20px, 5vw, 32px); 
+      font-weight: 700; 
+      color: white; 
+      margin-bottom: 12px; 
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); 
+    }
+    
+    .busy-message { 
+      font-size: clamp(14px, 3vw, 18px); 
+      color: rgba(255, 255, 255, 0.95); 
+      margin-bottom: 24px; 
+      line-height: 1.6; 
+    }
+    
+    .btn-cancel-queue { 
+      padding: 12px 32px; 
+      background: white; 
+      color: #dc2626; 
+      border: none; 
+      border-radius: 8px; 
+      font-weight: 600; 
+      font-size: 14px; 
+      cursor: pointer; 
+      transition: all 0.2s ease; 
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      min-height: 44px;
+    }
+    
+    .btn-cancel-queue:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4); 
+    }
+    
+    /* Tap to Play Overlay (for mobile autoplay fallback) */
+    .tap-to-play {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 15;
+      cursor: pointer;
+    }
+    
+    .tap-to-play.active { display: flex; }
+    
+    .tap-icon { 
+      font-size: 72px; 
+      margin-bottom: 16px; 
+      animation: pulse 2s ease-in-out infinite; 
+    }
+    
+    .tap-title { 
+      font-size: 28px; 
+      font-weight: 700; 
+      color: white; 
+      margin-bottom: 8px; 
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); 
+    }
+    
+    .tap-message { 
+      font-size: 16px; 
+      color: rgba(255, 255, 255, 0.9); 
+      text-align: center; 
+    }
+    
+    /* Loading Overlay */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 25;
+      backdrop-filter: blur(10px);
+    }
+    
+    .loading-overlay.active { display: flex; }
+    
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(59, 130, 246, 0.2);
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #60a5fa;
+      text-align: center;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      background: var(--bg-input);
+      border-radius: 6px;
+      border: 1px solid var(--border-secondary);
+      font-size: 13px;
+      transition: all 0.3s ease;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--modal-bg);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow-y: auto;
+    }
+    
+    .modal.active { display: flex; }
+    
+    .modal-content {
+      background: var(--modal-content);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-secondary);
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      margin: auto;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+    
+    .modal-title {
+      font-size: clamp(16px, 4vw, 18px);
+      font-weight: 600;
+      color: var(--text-title);
+    }
+    
+    .modal-close {
+      background: var(--badge-stopped-bg);
+      color: var(--badge-stopped-color);
+      border: 1px solid var(--badge-stopped-border);
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      min-height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: bold;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    
+    .modal-close:hover {
+      background: rgba(239, 68, 68, 0.3);
+      transform: scale(1.1);
+    }
+    
+    .stats-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px; 
+    }
+    
+    .stat-item {
+      background: var(--bg-input);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-secondary);
+      transition: all 0.3s ease;
+    }
+    
+    .stat-label {
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    
+    .stat-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-accent);
+      font-family: 'SF Mono', Monaco, monospace;
+      word-break: break-all;
+    }
+    
+    /* Config Display - Responsive */
+    .config-display {
+      background: var(--bg-input);
+      border-radius: 8px;
+      border: 1px solid var(--border-secondary);
+      padding: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .config-grid {
+      display: grid;
+      gap: 6px;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+    
+    .config-item {
+      background: var(--bg-item);
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-primary);
+      transition: all 0.3s ease;
+    }
+    
+    .config-label {
+      font-size: 9px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+      font-weight: 750;
+    }
+    
+    .config-value {
+      font-size: 12px;
+      font-family: 'SF Mono', Monaco, monospace;
+      color: var(--text-primary);
+      font-weight: 500;
+      word-break: break-word;
+    }
+    
+    .log-container {
+      background: var(--bg-input);
+      border: 1px solid var(--border-primary);
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      transition: all 0.3s ease;
+    }
+    
+    .log-line {
+      padding: 6px 8px;
+      border-radius: 4px;
+      background: var(--bg-item);
+      border-left: 2px solid transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 4px;
+      transition: all 0.3s ease;
+    }
+    
+    @media (min-width: 640px) {
+      .log-line {
+        flex-direction: row;
+        gap: 8px;
+      }
+    }
+    
+    .log-time {
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 10px;
+    }
+    
+    @media (min-width: 640px) {
+      .log-time {
+        min-width: 70px;
+      }
+    }
+    
+    .log-message {
+      flex: 1;
+      color: var(--text-primary);
+      font-size: 11px;
+      word-break: break-word;
+    }
+    
+    .log-line.log-success { border-left-color: var(--success-primary); }
+    .log-line.log-error { border-left-color: var(--danger-primary); }
+    .log-line.log-warning { border-left-color: #f59e0b; }
+    .log-line.log-info { border-left-color: var(--accent-primary); }
+
+    .divider {
+      height: 1px;
+      background: var(--border-secondary);
+      margin: 16px 0;
+    }
+    
+    /* Codec Support Badges */
+    .codec-support-section {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      background: var(--bg-item);
+      border-radius: 8px;
+      border: 1px solid var(--border-primary);
+      transition: all 0.3s ease;
+    }
+    
+    .codec-support-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    
+    .codec-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .codec-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid;
+      transition: all 0.3s ease;
+    }
+    
+    .codec-icon {
+      font-size: 14px;
+    }
+    
+    .codec-name {
+      font-family: 'SF Mono', Monaco, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .codec-status {
+      font-size: 10px;
+      opacity: 0.9;
+    }
+    
+    /* Checking state */
+    .codec-badge-checking {
+      background: rgba(100, 116, 139, 0.2);
+      color: #94a3b8;
+      border-color: rgba(100, 116, 139, 0.3);
+    }
+    
+    [data-theme="light"] .codec-badge-checking {
+      background: rgba(100, 116, 139, 0.15);
+      color: #64748b;
+      border-color: rgba(100, 116, 139, 0.4);
+    }
+    
+    /* Supported state */
+    .codec-badge-supported {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    
+    [data-theme="light"] .codec-badge-supported {
+      background: rgba(76, 175, 80, 0.15);
+      color: #2e7d32;
+      border-color: rgba(76, 175, 80, 0.4);
+    }
+    
+    /* Not supported state */
+    .codec-badge-not-supported {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    
+    [data-theme="light"] .codec-badge-not-supported {
+      background: rgba(244, 67, 54, 0.15);
+      color: #c62828;
+      border-color: rgba(244, 67, 54, 0.4);
+    }
+    
+    /* Unknown state */
+    .codec-badge-unknown {
+      background: rgba(100, 116, 139, 0.2);
+      color: #cbd5e1;
+      border-color: rgba(100, 116, 139, 0.3);
+    }
+    
+    [data-theme="light"] .codec-badge-unknown {
+      background: rgba(100, 116, 139, 0.15);
+      color: #475569;
+      border-color: rgba(100, 116, 139, 0.4);
+    }
+    
+    /* P2P Section Styles */
+    .p2p-section {
+      padding: 12px;
+      background: var(--bg-item);
+      border-radius: 8px;
+      border: 1px solid var(--border-primary);
+      transition: all 0.3s ease;
+    }
+    
+    .p2p-section.disabled {
+      opacity: 0.5;
+    }
+    
+    /* Section Headers in Modal */
+    .section-header {
+      font-size: 15px;
+      color: var(--text-accent);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    
+    /* Improve scrollbar */
+    .modal-content::-webkit-scrollbar,
+    .log-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .modal-content::-webkit-scrollbar-track,
+    .log-container::-webkit-scrollbar-track {
+      background: var(--bg-item);
+      border-radius: 4px;
+    }
+    
+    .modal-content::-webkit-scrollbar-thumb,
+    .log-container::-webkit-scrollbar-thumb {
+      background: var(--border-secondary);
+      border-radius: 4px;
+    }
+    
+    /* Mobile optimization */
+    @media (max-width: 640px) {
+      body { padding: 8px; }
+      .card { padding: 12px; }
+      .header { margin-bottom: 12px; }
+      h1 { font-size: 18px; }
+      .badge { font-size: 9px; padding: 5px 10px; }
+      button { font-size: 12px; padding: 10px 14px; }
+    }
+    
+    /* Alert Overlay */
+    .alert-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--modal-bg);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      animation: fadeIn 0.2s ease;
+      padding: 12px;
+    }
+
+    .alert-overlay.active {
+      display: flex;
+    }
+
+    .alert-box {
+      background: var(--modal-content);
+      backdrop-filter: blur(10px);
+      border: 2px solid var(--danger-primary);
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideIn 0.3s ease;
+      transition: all 0.3s ease;
+    }
+
+    .alert-box.success {
+      border-color: var(--success-primary);
+    }
+
+    .alert-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-secondary);
+    }
+
+    .alert-icon {
+      font-size: 32px;
+      line-height: 1;
+      animation: iconBounce 0.5s ease;
+      flex-shrink: 0;
+    }
+
+    @keyframes iconBounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .alert-title {
+      font-size: clamp(16px, 4vw, 20px);
+      font-weight: 700;
+      color: var(--danger-primary);
+      flex: 1;
+    }
+
+    .alert-box.success .alert-title {
+      color: var(--success-primary);
+    }
+
+    .alert-message {
+      background: var(--bg-input);
+      border-left: 4px solid var(--danger-primary);
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid var(--border-secondary);
+      transition: all 0.3s ease;
+    }
+
+    .alert-box.success .alert-message {
+      border-left-color: var(--success-primary);
+    }
+
+    /* Custom scrollbar for alert message */
+    .alert-message::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .alert-message::-webkit-scrollbar-track {
+      background: var(--bg-item);
+      border-radius: 4px;
+    }
+
+    .alert-message::-webkit-scrollbar-thumb {
+      background: var(--border-secondary);
+      border-radius: 4px;
+    }
+
+    .alert-message::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
+
+    .alert-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .alert-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .alert-btn:active {
+      transform: scale(0.98);
+    }
+
+    .alert-btn-primary {
+      background: linear-gradient(135deg, var(--danger-primary) 0%, var(--danger-secondary) 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .alert-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    }
+
+    .alert-btn-success {
+      background: linear-gradient(135deg, var(--success-primary) 0%, var(--success-secondary) 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .alert-btn-success:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    .alert-btn-secondary {
+      background: rgba(100, 116, 139, 0.2);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-secondary);
+    }
+
+    .alert-btn-secondary:hover {
+      background: rgba(100, 116, 139, 0.3);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .alert-box {
+        width: 95%;
+        padding: 16px;
+        max-height: 90vh;
+      }
+      
+      .alert-title {
+        font-size: 16px;
+      }
+      
+      .alert-icon {
+        font-size: 24px;
+      }
+      
+      .alert-actions {
+        flex-direction: column;
+      }
+      
+      .alert-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Main Content - Centered -->
+    <div style="max-width: 1200px; margin: 0 auto;">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-left">
+          <h1>LLC-4000 WebRTC</h1>
+          <div class="theme-toggle" id="themeToggle">
+            <span class="theme-icon" id="themeIcon">🌙</span>
+            <span class="theme-label" id="themeLabel">Dark</span>
+          </div>
+        </div>
+        <div class="theme-toggle" id="langToggle" style="margin-left: 8px;">
+          <span class="theme-icon" id="langIcon">🌐</span>
+          <span class="theme-label" id="langLabel">EN</span>
+        </div>
+        <div class="status-badges">
+          <span class="badge badge-stopped" id="serverStatus">⚫ Disconnected</span>
+        </div>
+      </div>
+    <div style="max-width: 1200px; margin: 0 auto;">
+      <!-- Video Player Card -->
+      <div class="card">
+        <div class="card-title">
+          <span>📺 Video Stream</span>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-icon" id="btnShowConsole">📋</button>
+            <button class="btn-icon" id="btnShowStats" disabled>📊</button>
+          </div>
+        </div>
+          
+          <div class="video-container" id="videoContainer">
+            <div class="blue-screen" id="blueScreen"></div>
+            <div class="busy-screen" id="busyScreen">
+              <div class="busy-icon">⏳</div>
+              <div class="busy-title">Server Busy</div>
+              <div class="busy-message">Another viewer is currently connected.<br>Please try again in a moment.</div>
+              <button class="btn-cancel-queue" id="btnGoBack">Go Back</button>
+            </div>
+            <div class="loading-overlay" id="loadingOverlay">
+              <div class="loading-spinner"></div>
+              <div class="loading-text" id="loadingText">Loading...</div>
+            </div>
+            <div class="tap-to-play" id="tapToPlay">
+              <div class="tap-icon">▶️</div>
+              <div class="tap-title">Tap to Play</div>
+              <div class="tap-message">Autoplay was blocked by your browser</div>
+            </div>
+            <video id="video" autoplay playsinline controls></video>
+          </div>
+          
+          <div style="margin-top: 12px;">
+            <div class="checkbox-group">
+              <input type="checkbox" id="forceRelay">
+              <label for="forceRelay" style="margin: 0; cursor: pointer; text-transform: none; font-size: 12px;">
+                🔒 Force TURN Relay
+              </label>
+            </div>
+            
+            <div class="checkbox-group" style="margin-top: 8px;">
+              <input type="checkbox" id="lteMode">
+              <label for="lteMode" style="margin: 0; cursor: pointer; text-transform: none; font-size: 12px;" title="Increases jitter buffer to 350ms for smoother video over cellular/high-latency connections">
+                📡 LTE Mode (Larger Buffer)
+              </label>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 11px; padding: 4px 10px; margin-top: 4px;">
+              Enable for cellular/satellite connections to reduce choppy video
+            </p>
+          </div>
+          
+          <div class="controls" style="margin-top: 12px;">
+            <button class="btn-primary" id="btnConnect">Connect</button>
+            <button class="btn-danger" id="btnDisconnect" disabled>Disconnect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End of centered container -->
+  </div>
+  
+  <!-- Statistics Modal -->
+  <div class="modal" id="statsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">📊 Stream Statistics</div>
+        <div class="modal-close" id="closeStats">×</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">Video Codec</div>
+          <div class="stat-value" id="statCodec">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Audio Codec</div>
+          <div class="stat-value" id="statAudioCodec">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Resolution</div>
+          <div class="stat-value" id="statResolution">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Frame Rate</div>
+          <div class="stat-value" id="statFps">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Video Bitrate</div>
+          <div class="stat-value" id="statBitrate">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Audio Bitrate</div>
+          <div class="stat-value" id="statAudioBitrate">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Connection Type</div>
+          <div class="stat-value" id="statType">—</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Data Received</div>
+          <div class="stat-value" id="statDataReceived">0 MB</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Packets Lost</div>
+          <div class="stat-value" id="statPacketsLost">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Loss Rate</div>
+          <div class="stat-value" id="statLossRate">0.00%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Round Trip Time</div>
+          <div class="stat-value" id="statRTT">0 ms</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Network Latency</div>
+          <div class="stat-value" id="statNetworkLatency">0 ms</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Jitter</div>
+          <div class="stat-value" id="statJitter">0 ms</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Jitter Buffer</div>
+          <div class="stat-value" id="statJitterBuffer">— ms</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">NACK Count</div>
+          <div class="stat-value" id="statNackCount" style="color: #60a5fa;">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Retransmitted</div>
+          <div class="stat-value" id="statRetransmitted" style="color: #34d399;">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Console Modal -->
+  <div class="modal" id="consoleModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">📋 Console & Diagnostics</div>
+        <div class="modal-close" id="closeConsole">×</div>
+      </div>
+      
+      <!-- Codec Support Badges -->
+      <div class="codec-support-section">
+        <div class="codec-support-label">This Browser Codec Support:</div>
+        <div class="codec-badges">
+          <div class="codec-badge codec-badge-checking" id="codecBadgeH264">
+            <span class="codec-icon">⏳</span>
+            <span class="codec-name">H.264</span>
+            <span class="codec-status">Checking...</span>
+          </div>
+          <div class="codec-badge codec-badge-checking" id="codecBadgeH265">
+            <span class="codec-icon">⏳</span>
+            <span class="codec-name">H.265</span>
+            <span class="codec-status">Checking...</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <!-- Console Logs -->
+      <div class="section-header">Console Logs</div>
+      <div class="log-container" id="logContainer"></div>
+    </div>
+  </div>
+  
+  <!-- Alert Modal -->
+  <div id="alertOverlay" class="alert-overlay">
+    <div id="alertBox" class="alert-box">
+      <div class="alert-header">
+        <div id="alertIcon" class="alert-icon">❌</div>
+        <div id="alertTitle" class="alert-title">Error</div>
+      </div>
+      <div id="alertMessage" class="alert-message"></div>
+      <div class="alert-actions">
+        <button id="alertClose" class="alert-btn alert-btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function() {
+  'use strict';
+  
+  // Translation table
+  // Add this near the top with other state variables
+  let currentLang = 'en'; // Will be loaded from config
+  // Add these element references near the top with other elements
+  const $langToggle = document.getElementById('langToggle');
+  const $langIcon = document.getElementById('langIcon');
+  const $langLabel = document.getElementById('langLabel');
+
+  // Add this after the theme toggle event listener
+  // Language Toggle Functionality
+  $langToggle.addEventListener('click', () => {
+    currentLang = currentLang === 'en' ? 'ja' : 'en';
+    applyTranslations(currentLang);
+    $langLabel.textContent = currentLang.toUpperCase();
+    localStorage.setItem('language', currentLang);
+    log('🌐 Language switched to ' + currentLang.toUpperCase(), 'info');
+  });
+  const translations = {
+    en: {
+      // Header
+      title: 'LLC-4000 WebRTC',
+      statusConnected: 'Connected',
+      statusDisconnected: 'Disconnected',
+      
+      // Video Card
+      videoStreamTitle: 'Video Stream',
+      forceRelayLabel: 'Force TURN Relay',
+      lteModeLabel: 'LTE Mode (Larger Buffer)',
+      lteModeDesc: 'Enable for cellular/satellite connections to reduce choppy video',
+      btnConnect: 'Connect',
+      btnDisconnect: 'Disconnect',
+      
+      // Console Modal
+      consoleTitle: 'Console & Diagnostics',
+      codecSupportLabel: 'This Browser Codec Support:',
+      consoleLogsTitle: 'Console Logs',
+      codecChecking: 'Checking...',
+      codecSupported: 'Supported',
+      codecNotSupported: 'Not Supported',
+      codecUnknown: 'Unknown',
+      
+      // Stats Modal
+      statsTitle: 'Stream Statistics',
+      statVideoCodec: 'Video Codec',
+      statAudioCodec: 'Audio Codec',
+      statResolution: 'Resolution',
+      statFrameRate: 'Frame Rate',
+      statVideoBitrate: 'Video Bitrate',
+      statAudioBitrate: 'Audio Bitrate',
+      statConnectionType: 'Connection Type',
+      statDataReceived: 'Data Received',
+      statPacketsLost: 'Packets Lost',
+      statLossRate: 'Loss Rate',
+      statRTT: 'Round Trip Time',
+      statNetworkLatency: 'Network Latency',
+      statJitter: 'Jitter',
+      statJitterBuffer: 'Jitter Buffer',
+      statNackCount: 'NACK Count',
+      statRetransmitted: 'Retransmitted',
+      
+      // Alert
+      alertConnectionFailed: 'Connection Failed',
+      alertOk: 'OK',
+      
+      // Loading messages
+      loadingConnecting: 'Start connecting to server...',
+      loadingNegotiating: 'Negotiating connection...',
+      loadingIceCandidates: 'Processing ICE candidates...',
+      loadingIceConnectivity: 'Waiting for ICE connectivity...',
+      
+      // Busy screen
+      busyTitle: 'Server Busy',
+      busyMessage: 'Another viewer is currently connected.<br>Please try again in a moment.',
+      btnGoBack: 'Go Back'
+    },
+    
+    ja: {
+      // Header
+      title: 'LLC-4000 WebRTC',
+      statusConnected: '接続済み',
+      statusDisconnected: '切断',
+      
+      // Video Card
+      videoStreamTitle: 'ビデオストリーム',
+      forceRelayLabel: 'TURN リレーを強制',
+      lteModeLabel: 'LTE モード（大きいバッファ）',
+      lteModeDesc: 'セルラー/衛星接続でカクつきを軽減するために有効にする',
+      btnConnect: 'コネクト',
+      btnDisconnect: 'ディスコネクト',
+      
+      // Console Modal
+      consoleTitle: 'コンソール＆診断',
+      codecSupportLabel: 'このブラウザのコーデック対応:',
+      consoleLogsTitle: 'コンソールログ',
+      codecChecking: '確認中...',
+      codecSupported: '対応',
+      codecNotSupported: '非対応',
+      codecUnknown: '不明',
+      
+      // Stats Modal
+      statsTitle: 'ストリーム統計',
+      statVideoCodec: 'ビデオコーデック',
+      statAudioCodec: 'オーディオコーデック',
+      statResolution: '解像度',
+      statFrameRate: 'フレームレート',
+      statVideoBitrate: 'ビデオビットレート',
+      statAudioBitrate: 'オーディオビットレート',
+      statConnectionType: '接続タイプ',
+      statDataReceived: '受信データ',
+      statPacketsLost: 'パケット損失',
+      statLossRate: '損失率',
+      statRTT: '往復時間',
+      statNetworkLatency: 'ネットワーク遅延',
+      statJitter: 'ジッター',
+      statJitterBuffer: 'ジッターバッファ',
+      statNackCount: 'NACK カウント',
+      statRetransmitted: '再送信済み',
+      
+      // Alert
+      alertConnectionFailed: '接続失敗',
+      alertOk: 'OK',
+      
+      // Loading messages
+      loadingConnecting: 'サーバーに接続中...',
+      loadingNegotiating: '接続をネゴシエーション中...',
+      loadingIceCandidates: 'ICE候補を処理中...',
+      loadingIceConnectivity: 'ICE接続を待機中...',
+      
+      // Busy screen
+      busyTitle: 'サーバービジー',
+      busyMessage: '別の視聴者が現在接続されています。<br>しばらくしてから再試行してください。',
+      btnGoBack: '戻る'
+    }
+  };
+  
+  // Function to apply translations
+  function applyTranslations(lang) {
+    const t = translations[lang];
+    
+    // Header
+    document.querySelector('h1').textContent = t.title;
+    
+    // Video card
+    document.querySelector('.card-title span').textContent = '📺 ' + t.videoStreamTitle;
+    document.querySelector('label[for="forceRelay"]').textContent = '🔒 ' + t.forceRelayLabel;
+    document.querySelector('label[for="lteMode"]').textContent = '📡 ' + t.lteModeLabel;
+    document.querySelector('label[for="lteMode"]').setAttribute('title', t.lteModeDesc);
+    const lteModeDesc = document.querySelector('label[for="lteMode"]').parentElement.nextElementSibling;
+    if (lteModeDesc && lteModeDesc.tagName === 'P') {
+      lteModeDesc.textContent = t.lteModeDesc;
+    }
+    
+    // Buttons
+    $btnConnect.textContent = t.btnConnect;
+    $btnDisconnect.textContent = t.btnDisconnect;
+    $btnGoBack.textContent = t.btnGoBack;
+    
+    // Console modal
+    document.querySelector('#consoleModal .modal-title').textContent = '📋 ' + t.consoleTitle;
+    document.querySelector('.codec-support-label').textContent = t.codecSupportLabel;
+    document.querySelector('#consoleModal .section-header').textContent = t.consoleLogsTitle;
+    
+    // Stats modal
+    document.querySelector('#statsModal .modal-title').textContent = '📊 ' + t.statsTitle;
+    document.querySelectorAll('#statsModal .stat-label').forEach((el, idx) => {
+      const labels = [
+        t.statVideoCodec, t.statAudioCodec, t.statResolution, t.statFrameRate,
+        t.statVideoBitrate, t.statAudioBitrate, t.statConnectionType, t.statDataReceived,
+        t.statPacketsLost, t.statLossRate, t.statRTT, t.statNetworkLatency,
+        t.statJitter, t.statJitterBuffer, t.statNackCount, t.statRetransmitted
+      ];
+      if (labels[idx]) el.textContent = labels[idx];
+    });
+    
+    // Alert button
+    $alertClose.textContent = t.alertOk;
+    
+    // Busy screen
+    document.querySelector('.busy-title').textContent = t.busyTitle;
+    document.querySelector('.busy-message').innerHTML = t.busyMessage;
+    
+    // Update status badge if needed
+    updateConnectionBadge(isConnected);
+    
+    // Update codec badges
+    updateCodecBadgeText(lang);
+  }
+
+// Update codec badge text based on language
+function updateCodecBadgeText(lang) {
+  const t = translations[lang];
+  document.querySelectorAll('.codec-badge').forEach(badge => {
+    const status = badge.querySelector('.codec-status');
+    if (status) {
+      const currentText = status.textContent;
+      if (currentText.includes('Checking') || currentText.includes('確認中')) {
+        status.textContent = t.codecChecking;
+      } else if (currentText.includes('Supported') || currentText.includes('対応')) {
+        status.textContent = t.codecSupported;
+      } else if (currentText.includes('Not Supported') || currentText.includes('非対応')) {
+        status.textContent = t.codecNotSupported;
+      } else if (currentText.includes('Unknown') || currentText.includes('不明')) {
+        status.textContent = t.codecUnknown;
+      }
+    }
+  });
+}
+  
+  
+  // Theme Toggle Functionality
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeLabel = document.getElementById('themeLabel');
+  const htmlElement = document.documentElement;
+  
+  // Load saved theme preference or default to dark
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  setTheme(savedTheme);
+  
+  themeToggle.addEventListener('click', () => {
+    const currentTheme = htmlElement.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+  });
+  
+  function setTheme(theme) {
+    if (theme === 'light') {
+      htmlElement.setAttribute('data-theme', 'light');
+      themeIcon.textContent = '☀️';
+      themeLabel.textContent = 'Light';
+      localStorage.setItem('theme', 'light');
+    } else {
+      htmlElement.removeAttribute('data-theme');
+      themeIcon.textContent = '🌙';
+      themeLabel.textContent = 'Dark';
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+  
+  console.log("Current port: ", location.port)
+  
+  // Configuration
+  const API_BASE = (location.protocol === 'https:' ? 'https://' : 'http://') + location.hostname + ':' + location.port +'/api';
+  let WS_URL = null;
+  
+  // Elements
+  const $video = document.getElementById('video');
+  const $videoContainer = document.getElementById('videoContainer');
+  const $blueScreen = document.getElementById('blueScreen');
+  const $busyScreen = document.getElementById('busyScreen');
+  const $loadingOverlay = document.getElementById('loadingOverlay');
+  const $loadingText = document.getElementById('loadingText');
+  const $tapToPlay = document.getElementById('tapToPlay');
+  const $btnGoBack = document.getElementById('btnGoBack');
+  const $btnConnect = document.getElementById('btnConnect');
+  const $btnDisconnect = document.getElementById('btnDisconnect');
+  const $forceRelay = document.getElementById('forceRelay');
+  const $lteMode = document.getElementById('lteMode');
+  const $btnShowStats = document.getElementById('btnShowStats');
+  const $btnShowConsole = document.getElementById('btnShowConsole');
+  
+  const $logContainer = document.getElementById('logContainer');
+  const $codecBadgeH264 = document.getElementById('codecBadgeH264');
+  const $codecBadgeH265 = document.getElementById('codecBadgeH265');
+  
+  const $statsModal = document.getElementById('statsModal');
+  const $closeStats = document.getElementById('closeStats');
+  const $consoleModal = document.getElementById('consoleModal');
+  const $closeConsole = document.getElementById('closeConsole');
+  
+  const $statCodec = document.getElementById('statCodec');
+  const $statAudioCodec = document.getElementById('statAudioCodec');
+  const $statResolution = document.getElementById('statResolution');
+  const $statFps = document.getElementById('statFps');
+  const $statBitrate = document.getElementById('statBitrate');
+  const $statAudioBitrate = document.getElementById('statAudioBitrate');
+  const $statType = document.getElementById('statType');
+  const $statDataReceived = document.getElementById('statDataReceived');
+  const $statPacketsLost = document.getElementById('statPacketsLost');
+  const $statJitter = document.getElementById('statJitter');
+  const $statJitterBuffer = document.getElementById('statJitterBuffer');
+  const $statNetworkLatency = document.getElementById("statNetworkLatency");
+  const $statNackCount = document.getElementById('statNackCount');
+  const $statRetransmitted = document.getElementById('statRetransmitted');
+  const $statLossRate = document.getElementById('statLossRate');
+  const $statRTT = document.getElementById('statRTT');
+  
+  let lastErrorMessage = '';
+
+  // ============================================================================
+  // Loading Functions
+  // ============================================================================
+  const $alertOverlay = document.getElementById('alertOverlay');
+  const $alertBox = document.getElementById('alertBox');
+  const $alertIcon = document.getElementById('alertIcon');
+  const $alertTitle = document.getElementById('alertTitle');
+  const $alertMessage = document.getElementById('alertMessage');
+  const $alertClose = document.getElementById('alertClose');
+
+  function showLoading(message = 'Loading...') {
+    $loadingText.textContent = message;
+    $loadingOverlay.classList.add('active');  
+  }
+
+  function hideLoading() {
+    $loadingOverlay.classList.remove('active');
+  }
+
+  // ============================================================================
+  // Alert Functions
+  // ============================================================================
+  function showErrorAlert(message) {
+    lastErrorMessage = message;
+    
+    // Configure error alert
+    $alertBox.classList.remove('success');
+    $alertIcon.textContent = '❌';
+    $alertTitle.textContent = 'Connection Failed';
+    $alertMessage.textContent = message;
+    $alertClose.className = 'alert-btn alert-btn-primary';
+    
+    // Show alert
+    $alertOverlay.classList.add('active');
+    console.log('Error Alert:', message);
+  }
+
+  function showSuccessAlert(message = 'StreamingProgram is now running and ready for connections.') {
+    // Configure success alert
+    $alertBox.classList.add('success');
+    $alertIcon.textContent = '✅';
+    $alertTitle.textContent = 'Streaming Started Successfully';
+    $alertMessage.textContent = message;
+    $alertClose.className = 'alert-btn alert-btn-success';
+
+    // Show alert
+    $alertOverlay.classList.add('active');
+    
+    // Auto-close after 3 seconds
+    setTimeout(() => {
+      hideAlert();
+    }, 3000);
+    
+    console.log('Success Alert:', message);
+  }
+
+  function hideAlert() {
+    $alertOverlay.classList.remove('active');
+  }
+
+  $alertClose.addEventListener('click', hideAlert);
+  $alertOverlay.addEventListener('click', (e) => {
+    if (e.target === $alertOverlay) {
+      hideAlert();
+    }
+  });
+  
+  // Close alert with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hideAlert();
+    }
+  });
+  
+  // State
+  let ws = null;
+  let pc = null;
+  let remoteStream = null;
+  let statsInterval = null;
+  let pendingIceCandidates = [];
+  let remoteDescriptionSet = false;
+  let sdpNegotiationComplete = false;
+  
+  // Connection state management
+  let isConnecting = false;
+  let isConnected = false;
+  let intentionalDisconnect = false;
+  let cleanupInProgress = false;
+  let connectionTimeout = null;
+  let wsConnectionTimeout = null; // NEW: WebSocket connection timeout
+  const CONNECTION_TIMEOUT_MS = 20000;
+  const WS_CONNECTION_TIMEOUT_MS = 5000; // NEW: 5 second WebSocket timeout
+
+  // WebRTC configuration
+  let webrtcConfig = {
+    turn_url: 'turn://ab:ab@160.248.76.236:3478',
+    stun_url: 'stun:160.248.76.236:3478'
+  };
+  
+  // ============================================================================
+  // Console Logging
+  // ============================================================================
+  
+  function log(message, type = 'info') {
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const line = document.createElement('div');
+    line.className = `log-line log-${type}`;
+    line.innerHTML = `<span class="log-time">${time}</span><span class="log-message">${message}</span>`;
+    $logContainer.appendChild(line);
+    $logContainer.scrollTop = $logContainer.scrollHeight;
+    
+    // Keep last 100 entries
+    while ($logContainer.children.length > 100) {
+      $logContainer.removeChild($logContainer.firstChild);
+    }
+  }
+  
+  // ============================================================================
+  // WebRTC Functions
+  // ============================================================================
+  
+  function showBlueScreen() {
+    $blueScreen.classList.remove('hidden');
+  }
+  
+  function hideBlueScreen() {
+    $blueScreen.classList.add('hidden');
+  }
+
+  // Update showLoading function to use translations
+  function showLoading(messageKey = 'loadingConnecting') {
+    const t = translations[currentLang];
+    const message = t[messageKey] || messageKey; // Fallback to key if not found
+    $loadingText.textContent = message;
+    $loadingOverlay.classList.add('active');  
+  }
+
+  
+  function hideLoading() {
+    if ($loadingOverlay) {
+      $loadingOverlay.classList.remove('active');
+    }
+  }
+  
+  function showBusyScreen() {
+    if ($busyScreen) {
+      $busyScreen.classList.add('active');
+      $blueScreen.classList.add('hidden');
+      log('⏳ Server busy. Please try again later.', 'warning');
+    }
+  }
+  
+  function hideBusyScreen() {
+    if ($busyScreen) {
+      $busyScreen.classList.remove('active');
+    }
+  }
+  
+  function clearVideo() {
+    showBlueScreen();
+    try {
+      $video.pause();
+      $video.srcObject = null;
+    } catch (e) {}
+  }
+  
+  function parseSDPForStreamInfo(sdp) {
+    try {
+      const videoCodecMatch = sdp.match(/a=rtpmap:\d+ ([HV]\w+)/);
+      if (videoCodecMatch) {
+        $statCodec.textContent = videoCodecMatch[1];
+      }
+      
+      if (sdp.includes('OPUS') || sdp.includes('opus')) {
+        $statAudioCodec.textContent = 'Opus';
+      } else if (sdp.includes('MPEG4-GENERIC') || sdp.includes('mpeg4-generic')) {
+        $statAudioCodec.textContent = 'AAC';
+      }
+    } catch (e) {}
+  }
+  
+  function startStatsMonitoring() {
+    if (statsInterval) return;
+    if (!pc) return;
+
+    // Per-report state (keyed by report.id)
+    const state = {
+      inbound: new Map(),
+      outbound: new Map(),
+      startedAt: Date.now(),
+    };
+
+    const getOrInit = (map, id) => {
+      if (!map.has(id)) map.set(id, {});
+      return map.get(id);
+    };
+
+    const safeNum = (v) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+
+    // Pick one "primary" inbound video stream for UI
+    const pickPrimaryInboundVideo = (inboundVideoReports) => {
+      if (!inboundVideoReports.length) return null;
+
+      let best = inboundVideoReports[0];
+      let bestScore = -1;
+
+      for (const r of inboundVideoReports) {
+        const bytes = safeNum(r.bytesReceived) ?? 0;
+        const frames = safeNum(r.framesDecoded) ?? 0;
+        const pkts = safeNum(r.packetsReceived) ?? 0;
+        const score = bytes * 1e6 + frames * 1e3 + pkts;
+
+        if (score > bestScore) {
+          bestScore = score;
+          best = r;
+        }
+      }
+      return best;
+    };
+
+    const pickPrimaryOutboundVideo = (outboundVideoReports) => {
+      if (!outboundVideoReports.length) return null;
+
+      let best = outboundVideoReports[0];
+      let bestScore = -1;
+
+      for (const r of outboundVideoReports) {
+        const bytes = safeNum(r.bytesSent) ?? 0;
+        const pkts = safeNum(r.packetsSent) ?? 0;
+        const score = bytes * 1e6 + pkts;
+
+        if (score > bestScore) {
+          bestScore = score;
+          best = r;
+        }
+      }
+      return best;
+    };
+
+    log("📊 Starting stats monitoring...", "info");
+
+    statsInterval = setInterval(async () => {
+      if (!pc) return;
+
+      try {
+        const stats = await pc.getStats();
+
+        const inboundVideo = [];
+        const inboundAudio = [];
+        const outboundVideo = [];
+
+        stats.forEach((report) => {
+          if (report.type === "inbound-rtp") {
+            if (report.kind === "video") inboundVideo.push(report);
+            if (report.kind === "audio") inboundAudio.push(report);
+          }
+
+          if (report.type === "outbound-rtp") {
+            if (report.kind === "video") outboundVideo.push(report);
+          }
+        });
+
+        // ======= CALCULATE RTT from candidate-pair (ICE-based) =======
+        let rttMs = undefined;
+
+        stats.forEach((report) => {
+          if (report.type === "candidate-pair" && report.state === "succeeded") {
+            const rtt = safeNum(report.currentRoundTripTime);
+            if (rtt !== undefined) {
+              rttMs = Math.round(rtt * 1000);
+            }
+          }
+        });
+
+        if (rttMs !== undefined) {
+          $statRTT.textContent = `${rttMs} ms`;
+
+          if (rttMs > 200) {
+            $statRTT.style.color = "#ef4444";
+          } else if (rttMs > 100) {
+            $statRTT.style.color = "#f59e0b";
+          } else {
+            $statRTT.style.color = "#10b981";
+          }
+        } else {
+          $statRTT.textContent = "...";
+        }
+
+        // ======= NETWORK LATENCY (One-way network delay) =======
+        if (rttMs !== undefined) {
+          const networkLatencyMs = Math.round(rttMs / 2);
+          $statNetworkLatency.textContent = `${networkLatencyMs} ms`;
+          
+          if (networkLatencyMs > 150) {
+            $statNetworkLatency.style.color = "#ef4444";
+          } else if (networkLatencyMs > 75) {
+            $statNetworkLatency.style.color = "#f59e0b";
+          } else {
+            $statNetworkLatency.style.color = "#10b981";
+          }
+        } else {
+          $statNetworkLatency.textContent = "...";
+        }
+
+        // ======= INBOUND VIDEO (PRIMARY) =======
+        const inV = pickPrimaryInboundVideo(inboundVideo);
+
+        if (!inV) {
+          $statPacketsLost.textContent = "...";
+          $statLossRate.textContent = "...";
+          $statBitrate.textContent = "...";
+          $statJitter.textContent = "...";
+          $statNackCount.textContent = "...";
+          if ($statRetransmitted) $statRetransmitted.textContent = "...";
+        } else {
+          const s = getOrInit(state.inbound, inV.id);
+
+          // ---- FPS ----
+          const fps = safeNum(inV.framesPerSecond);
+          if (fps !== undefined) $statFps.textContent = Math.round(fps);
+
+          // ---- Resolution ----
+          const w = safeNum(inV.frameWidth);
+          const h = safeNum(inV.frameHeight);
+          if (w !== undefined && h !== undefined) $statResolution.textContent = `${w}x${h}`;
+
+          // ---- Bitrate (interval) ----
+          const bytesReceived = safeNum(inV.bytesReceived);
+          const ts = safeNum(inV.timestamp);
+          if (bytesReceived !== undefined) {
+            const mb = (bytesReceived / (1024 * 1024)).toFixed(2);
+            $statDataReceived.textContent = `${mb} MB`;
+
+            if (
+              s.lastBytes !== undefined &&
+              s.lastTs !== undefined &&
+              ts !== undefined &&
+              ts > s.lastTs
+            ) {
+              const bytesDiff = bytesReceived - s.lastBytes;
+              const timeDiffSec = (ts - s.lastTs) / 1000;
+              const kbps = timeDiffSec > 0 ? Math.round((bytesDiff * 8) / timeDiffSec / 1000) : 0;
+              $statBitrate.textContent = `${kbps} kbps`;
+            }
+
+            s.lastBytes = bytesReceived;
+            if (ts !== undefined) s.lastTs = ts;
+          }
+
+          // ---- Packets lost / loss % (interval + since-start) ----
+          const lostNow = safeNum(inV.packetsLost);
+          const recvNow = safeNum(inV.packetsReceived);
+
+          // NEW: Set baseline when first packet loss is detected (synced with NACK/RTX)
+          if (s.baselineLost === undefined && lostNow !== undefined) {
+            s.baselineLost = lostNow;
+            s.baselineRecv = recvNow;
+            // Also initialize NACK and RTX baselines at the same time
+            const nackNow = safeNum(inV.nackCount);
+            const rtxRecvNow = safeNum(inV.retransmittedPacketsReceived);
+            if (nackNow !== undefined) s.baselineNack = nackNow;
+            if (rtxRecvNow !== undefined) s.baselineRtx = rtxRecvNow;
+          }
+
+          if (lostNow !== undefined && s.baselineLost !== undefined) {
+            const sinceLost = lostNow - s.baselineLost;
+            $statPacketsLost.textContent = String(Math.max(0, sinceLost));
+          } else {
+            $statPacketsLost.textContent = "...";
+          }
+
+          let intervalLossPct;
+          if (lostNow !== undefined && recvNow !== undefined && s.lastLost !== undefined && s.lastRecv !== undefined) {
+            const dLost = lostNow - s.lastLost;
+            const dRecv = recvNow - s.lastRecv;
+            const denom = dLost + dRecv;
+            intervalLossPct = denom > 0 ? (100 * dLost) / denom : 0;
+            $statLossRate.textContent = `${intervalLossPct.toFixed(2)}%`;
+
+            if (intervalLossPct > 5) {
+              $statLossRate.style.color = "#ef4444";
+            } else if (intervalLossPct > 1) {
+              $statLossRate.style.color = "#f59e0b";
+            } else {
+              $statLossRate.style.color = "#10b981";
+            }
+          } else {
+            $statLossRate.textContent = "...";
+          }
+
+          if (lostNow !== undefined) s.lastLost = lostNow;
+          if (recvNow !== undefined) s.lastRecv = recvNow;
+
+          // ---- Jitter ----
+          const jitter = safeNum(inV.jitter);
+          if (jitter !== undefined) $statJitter.textContent = `${Math.round(jitter * 1000)} ms`;
+
+          // ---- Jitter Buffer Target ----
+          try {
+            const receivers = pc.getReceivers();
+            const videoReceiver = receivers.find(r => r.track && r.track.kind === 'video');
+            if (videoReceiver && videoReceiver.jitterBufferTarget !== undefined) {
+              const bufferSeconds = videoReceiver.jitterBufferTarget;
+              // const bufferMs = Math.round(bufferSeconds * 1000); // Convert seconds to ms
+              $statJitterBuffer.textContent = `${bufferSeconds} ms`;
+            }
+          } catch (e) {
+            // Jitter buffer API not supported
+          }
+
+          // ---- NACK count (synced with packet loss baseline) ----
+          const nackNow = safeNum(inV.nackCount);
+          if (nackNow !== undefined) {
+            // Use baseline if it exists, otherwise show raw count
+            if (s.baselineNack !== undefined) {
+              const sinceNack = Math.max(0, nackNow - s.baselineNack);
+              $statNackCount.textContent = String(sinceNack);
+            } else {
+              $statNackCount.textContent = String(nackNow);
+            }
+
+            if (s.lastNack !== undefined) {
+              const dNack = nackNow - s.lastNack;
+              if (dNack > 0) console.log(`📤 NACK: ${dNack} NACK messages in last interval`);
+            }
+            s.lastNack = nackNow;
+          } else {
+            $statNackCount.textContent = "n/a";
+          }
+
+          // ---- Retransmitted packets received (synced with packet loss baseline) ----
+          if ($statRetransmitted) {
+            const rtxRecvNow = safeNum(inV.retransmittedPacketsReceived);
+            if (rtxRecvNow !== undefined) {
+              // Use baseline if it exists, otherwise show raw count
+              if (s.baselineRtx !== undefined) {
+                const sinceRtx = Math.max(0, rtxRecvNow - s.baselineRtx);
+                $statRetransmitted.textContent = String(sinceRtx);
+              } else {
+                $statRetransmitted.textContent = String(rtxRecvNow);
+              }
+
+              if (s.lastRtx !== undefined) {
+                const dRtx = rtxRecvNow - s.lastRtx;
+                if (dRtx > 0) console.log(`📥 RTX: ${dRtx} retransmitted packets received in last interval`);
+              }
+              s.lastRtx = rtxRecvNow;
+            } else {
+              $statRetransmitted.textContent = "n/a";
+            }
+          }
+        }
+
+        // ======= INBOUND AUDIO (bitrate) =======
+        for (const inA of inboundAudio) {
+          const sA = getOrInit(state.inbound, inA.id);
+          const bytes = safeNum(inA.bytesReceived);
+          const ts = safeNum(inA.timestamp);
+
+          if (bytes !== undefined && ts !== undefined && sA.lastBytes !== undefined && sA.lastTs !== undefined && ts > sA.lastTs) {
+            const bytesDiff = bytes - sA.lastBytes;
+            const timeDiffSec = (ts - sA.lastTs) / 1000;
+            if (timeDiffSec > 0) {
+              const kbps = Math.round((bytesDiff * 8) / timeDiffSec / 1000);
+              $statAudioBitrate.textContent = `${kbps} kbps`;
+            }
+          }
+
+          if (bytes !== undefined) sA.lastBytes = bytes;
+          if (ts !== undefined) sA.lastTs = ts;
+        }
+
+        // ======= OUTBOUND VIDEO RTX SENT =======
+        const outV = pickPrimaryOutboundVideo(outboundVideo);
+        if (outV) {
+          const sO = getOrInit(state.outbound, outV.id);
+          const rtxSentNow = safeNum(outV.retransmittedPacketsSent);
+          const sentNow = safeNum(outV.packetsSent);
+
+          if (rtxSentNow !== undefined && sO.lastRtxSent !== undefined) {
+            const dRtxSent = rtxSentNow - sO.lastRtxSent;
+            if (dRtxSent > 0) console.log(`📤 RTX sent: ${dRtxSent} retransmitted packets sent in last interval`);
+          }
+          if (rtxSentNow !== undefined) sO.lastRtxSent = rtxSentNow;
+
+          if (sentNow !== undefined) sO.lastSent = sentNow;
+        }
+      } catch (e) {
+        console.error("Stats error:", e);
+      }
+    }, 1000);
+  }
+  
+  // Modify the updateConnectionBadge function
+  function updateConnectionBadge(connected) {
+    const $serverStatus = document.getElementById('serverStatus');
+    const t = translations[currentLang];
+    
+    if (connected) {
+      $serverStatus.className = 'badge badge-running';
+      $serverStatus.innerHTML = '<span>⬤</span><span>' + t.statusConnected + '</span>';
+    } else {
+      $serverStatus.className = 'badge badge-stopped';
+      $serverStatus.innerHTML = '<span>⬤</span><span>' + t.statusDisconnected + '</span>';
+    }
+  }
+
+  function setupPeerConnection() {
+    try {
+      console.log('Setting up PeerConnection with webrtcConfig:', webrtcConfig);
+      
+      const iceServers = [];
+      
+      if (webrtcConfig.stun_url && webrtcConfig.stun_url.trim() !== '') {
+        iceServers.push({ urls: webrtcConfig.stun_url });
+        log('Using STUN: ' + webrtcConfig.stun_url, 'info');
+      } else {
+        log('No STUN server configured (LAN mode)', 'info');
+      }
+      
+      if (webrtcConfig.turn_url && webrtcConfig.turn_url.trim() !== '') {
+        const turnMatch = webrtcConfig.turn_url.match(/^(turn|turns):\/\/([^:]+):([^@]+)@(.+)$/);
+        if (turnMatch) {
+          const [, protocol, username, credential, hostPort] = turnMatch;
+          iceServers.push({
+            urls: `${protocol}:${hostPort}`,
+            username: username,
+            credential: credential
+          });
+          log('Using TURN: ' + `${protocol}:${hostPort}`, 'info');
+          log('  Username: ' + username, 'info');
+        } else {
+          log('⚠ Invalid TURN URL format', 'warning');
+        }
+      } else {
+        log('No TURN server configured (LAN mode)', 'info');
+      }
+      
+      const configuration = {
+        iceServers: iceServers.length > 0 ? iceServers : undefined
+      };
+      
+      if ($forceRelay.checked) {
+        configuration.iceTransportPolicy = 'relay';
+        log('🔒 Force Relay enabled', 'info');
+      }
+      
+      console.log('Full RTCPeerConnection configuration:', JSON.stringify(configuration, null, 2));
+      
+      pc = new RTCPeerConnection(configuration);
+      log('✓ PeerConnection created', 'success');
+      
+      pc.ontrack = (event) => {
+        log('✓ Track received: ' + event.track.kind, 'success');
+        console.log('Track details:', {
+          kind: event.track.kind,
+          id: event.track.id,
+          readyState: event.track.readyState,
+          enabled: event.track.enabled,
+          muted: event.track.muted
+        });
+        
+        // Apply jitter buffer settings for video tracks
+        // if (event.track.kind === 'video' && event.receiver) {
+        //   try {
+        //     const isLTEMode = $lteMode.checked;
+        //     const jitterBufferSeconds = isLTEMode ? 0.35 : 0.05; // 350ms for LTE, 100ms for LAN (in seconds)
+            
+        //     if (event.receiver.jitterBufferTarget !== undefined) {
+        //       event.receiver.jitterBufferTarget = jitterBufferSeconds;
+        //       const jitterBufferMs = Math.round(jitterBufferSeconds * 1000);
+        //       log(`🔧 Jitter buffer set to ${jitterBufferMs}ms (${isLTEMode ? 'LTE Mode' : 'LAN Mode'})`, 'success');
+        //       console.log('Jitter buffer configured:', {
+        //         targetSeconds: jitterBufferSeconds,
+        //         targetMs: jitterBufferMs,
+        //         mode: isLTEMode ? 'LTE' : 'LAN',
+        //         receiver: event.receiver
+        //       });
+        //     } else {
+        //       log('⚠ Jitter buffer control not supported in this browser', 'warning');
+        //     }
+        //   } catch (e) {
+        //     log('⚠ Could not set jitter buffer: ' + e.message, 'warning');
+        //   }
+        // }
+        if (event.track.kind === 'video' && event.receiver) {
+          try {
+            const isLTEMode = $lteMode.checked;
+            const jitterBufferMs = isLTEMode ? 350 : 50; // 350ms for LTE, 100ms for LAN
+            
+            if (event.receiver.jitterBufferTarget !== undefined) {
+              event.receiver.jitterBufferTarget = jitterBufferMs;
+              log(`🔧 Jitter buffer set to ${jitterBufferMs}ms (${isLTEMode ? 'LTE Mode' : 'LAN Mode'})`, 'success');
+              console.log('Jitter buffer configured:', {
+                target: jitterBufferMs,
+                mode: isLTEMode ? 'LTE' : 'LAN',
+                receiver: event.receiver
+              });
+            } else {
+              log('⚠ Jitter buffer control not supported in this browser', 'warning');
+            }
+          } catch (e) {
+            log('⚠ Could not set jitter buffer: ' + e.message, 'warning');
+          }
+        }
+        
+        if (!remoteStream) {
+          remoteStream = new MediaStream();
+          $video.srcObject = remoteStream;
+          log('✓ MediaStream created and attached to video element', 'success');
+          
+          $video.onloadstart = () => log('📹 Video: loadstart', 'info');
+          $video.onloadedmetadata = () => {
+            log('📹 Video: loadedmetadata', 'info');
+            console.log('Video metadata:', {
+              videoWidth: $video.videoWidth,
+              videoHeight: $video.videoHeight,
+              duration: $video.duration,
+              readyState: $video.readyState
+            });
+          };
+          $video.onloadeddata = () => log('📹 Video: loadeddata', 'info');
+          $video.oncanplay = () => log('📹 Video: canplay', 'info');
+          $video.oncanplaythrough = () => log('📹 Video: canplaythrough', 'info');
+          $video.onplaying = () => log('📹 Video: playing', 'success');
+          $video.onwaiting = () => log('📹 Video: waiting (buffering)', 'warning');
+          $video.onstalled = () => log('📹 Video: stalled', 'warning');
+          $video.onsuspend = () => log('📹 Video: suspend', 'warning');
+          $video.onerror = (e) => {
+            log('📹 Video: ERROR - ' + ($video.error ? $video.error.message : 'unknown'), 'error');
+            console.error('Video error details:', $video.error);
+          };
+          
+          const tryPlay = () => {
+            log('✓ Video metadata loaded', 'success');
+            
+            console.log('Video element state before play:', {
+              srcObject: !!$video.srcObject,
+              tracks: $video.srcObject ? $video.srcObject.getTracks().map(t => ({
+                kind: t.kind,
+                state: t.readyState,
+                enabled: t.enabled,
+                muted: t.muted
+              })) : [],
+              videoWidth: $video.videoWidth,
+              videoHeight: $video.videoHeight,
+              readyState: $video.readyState,
+              paused: $video.paused
+            });
+            
+            hideLoading();
+            hideBlueScreen();
+            
+            $video.style.display = 'block';
+            $video.style.visibility = 'visible';
+            $video.style.opacity = '1';
+            $video.muted = false;
+            
+            $video.play()
+              .then(() => {
+                log('✓ Video playback started', 'success');
+                console.log('Video playing:', {
+                  currentTime: $video.currentTime,
+                  paused: $video.paused,
+                  videoWidth: $video.videoWidth,
+                  videoHeight: $video.videoHeight
+                });
+                
+                setTimeout(() => {
+                  if ($video.videoWidth === 0 || $video.videoHeight === 0) {
+                    log('⚠ WARNING: Video dimensions are 0x0 - frames may not be rendering!', 'error');
+                    console.error('Video not rendering frames despite playback started');
+                  }
+                }, 500);
+              })
+              .catch(e => {
+                log('⚠ Play error: ' + e.message, 'warning');
+                console.error('Play error details:', e);
+              });
+          };
+          
+          if ($video.readyState >= 1) {
+            log('ℹ Video metadata already loaded (fast connection)', 'info');
+            setTimeout(tryPlay, 50);
+          } else {
+            $video.addEventListener('loadedmetadata', tryPlay, { once: true });
+          }
+        }
+        
+        remoteStream.addTrack(event.track);
+        log(`✓ ${event.track.kind} track added to stream (total tracks: ${remoteStream.getTracks().length})`, 'success');
+        
+        if (event.track.readyState === 'live') {
+          log(`✓ ${event.track.kind} track is live`, 'success');
+        } else {
+          log(`⚠ ${event.track.kind} track state: ${event.track.readyState}`, 'warning');
+        }
+        
+        if (event.track.kind === 'video') {
+          $video.load();
+          log('🔄 Forced video element reload after video track added', 'info');
+        }
+        
+        event.track.onended = () => {
+          log(`⚠ ${event.track.kind} track ended`, 'warning');
+        };
+        
+        event.track.onmute = () => {
+          log(`⚠ ${event.track.kind} track muted`, 'warning');
+        };
+        
+        event.track.onunmute = () => {
+          log(`✓ ${event.track.kind} track unmuted`, 'success');
+        };
+      };
+      
+      pc.onicecandidate = (event) => {
+        if (event.candidate && ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'ice',
+            data: {
+              candidate: event.candidate.candidate,
+              sdpMLineIndex: event.candidate.sdpMLineIndex,
+              sdpMid: event.candidate.sdpMid
+            }
+          }));
+          log('→ ICE candidate sent', 'info');
+        }
+      };
+      
+      pc.oniceconnectionstatechange = () => {
+        log('ICE state: ' + pc.iceConnectionState, 'info');
+        
+        if (pc.iceConnectionState === 'connected') {
+          log('✓ ICE connected', 'success');
+          
+        } else if (pc.iceConnectionState === 'disconnected') {
+          log('⚠ ICE disconnected', 'warning');
+          
+        } else if (pc.iceConnectionState === 'failed') {
+          hideLoading();
+          log('✗ ICE connection failed', 'error');
+          
+          if (!intentionalDisconnect && !cleanupInProgress) {
+            cleanup();
+            $btnConnect.disabled = false;
+            $btnDisconnect.disabled = true;
+            $btnShowStats.disabled = true;
+          }
+          
+        } else if (pc.iceConnectionState === 'closed') {
+          log('ICE connection closed', 'info');
+        }
+      };
+      
+      pc.onicegatheringstatechange = () => {
+        log('ICE gathering state: ' + pc.iceGatheringState, 'info');
+        if (pc.iceGatheringState === 'complete') {
+          log('✓ ICE gathering complete', 'success');
+        }
+      };
+      
+      pc.onconnectionstatechange = async () => {
+        log('Connection state: ' + pc.connectionState, 'info');
+        
+        if (pc.connectionState === 'connected') {
+          hideLoading();
+          log('✓ WebRTC connection established!', 'success');
+          hideBlueScreen();
+          
+          $video.style.visibility = 'visible';
+          $video.style.display = 'block';
+          $video.style.opacity = '1';
+          
+          setTimeout(() => {
+            console.log('=== VIDEO DIAGNOSTIC ===');
+            console.log('Video element:', {
+              srcObject: !!$video.srcObject,
+              videoWidth: $video.videoWidth,
+              videoHeight: $video.videoHeight,
+              readyState: $video.readyState,
+              paused: $video.paused,
+              currentTime: $video.currentTime,
+              muted: $video.muted,
+              volume: $video.volume,
+              style: {
+                display: $video.style.display,
+                visibility: $video.style.visibility,
+                opacity: $video.style.opacity
+              }
+            });
+            
+            if ($video.srcObject) {
+              console.log('Tracks:', $video.srcObject.getTracks().map(t => ({
+                kind: t.kind,
+                id: t.id,
+                readyState: t.readyState,
+                enabled: t.enabled,
+                muted: t.muted
+              })));
+            }
+            
+            console.log('Overlays:', {
+              blueScreen: document.getElementById('blueScreen').className,
+              blueDisplay: window.getComputedStyle(document.getElementById('blueScreen')).display,
+              loadingDisplay: window.getComputedStyle(document.getElementById('loadingOverlay')).display
+            });
+            
+            if ($video.videoWidth === 0 || $video.videoHeight === 0) {
+              log('❌ CRITICAL: Video dimensions are 0x0!', 'error');
+              log('💡 This indicates frames are not being decoded/rendered', 'error');
+              log('💡 Possible causes: codec mismatch, decoder failure, or browser issue', 'error');
+              console.error('Video not rendering - check codec compatibility');
+            } else {
+              log(`✓ Video rendering: ${$video.videoWidth}x${$video.videoHeight}`, 'success');
+            }
+          }, 1000);
+          
+          isConnected = true;
+          isConnecting = false;
+          updateConnectionBadge(true);
+          
+          if (connectionTimeout) {
+            clearTimeout(connectionTimeout);
+            connectionTimeout = null;
+          }
+          
+          $btnConnect.disabled = true;
+          $btnDisconnect.disabled = false;
+          $btnShowStats.disabled = false;
+          
+          const stats = await pc.getStats();
+          let type = 'unknown';
+          
+          stats.forEach(report => {
+            if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+              stats.forEach(r => {
+                if (r.id === report.localCandidateId) {
+                  type = r.candidateType;
+                }
+              });
+            }
+          });
+          
+          log(`📊 Connection type: ${type}`, 'info');
+          $statType.textContent = type || 'unknown';
+          
+          startStatsMonitoring();
+          
+        } else if (pc.connectionState === 'failed') {
+          hideLoading();
+          log('✗ Connection failed', 'error');
+          updateConnectionBadge(false);
+          
+          if (!intentionalDisconnect && !cleanupInProgress) {
+            clearVideo();
+            $btnConnect.disabled = false;
+            $btnDisconnect.disabled = true;
+            $btnShowStats.disabled = true;
+          }
+          
+        } else if (pc.connectionState === 'disconnected') {
+          log('⚠ Connection disconnected', 'warning');
+          updateConnectionBadge(false);
+          
+          if (intentionalDisconnect && !cleanupInProgress) {
+            clearVideo();
+            $btnConnect.disabled = false;
+            $btnDisconnect.disabled = true;
+            $btnShowStats.disabled = true;
+          } else if (!intentionalDisconnect) {
+            log('⏳ Waiting for reconnection...', 'info');
+          }
+          
+        } else if (pc.connectionState === 'closed') {
+          log('Connection closed', 'info');
+          updateConnectionBadge(false);
+          
+          if (!cleanupInProgress) {
+            clearVideo();
+          }
+        }
+      };
+      
+      return pc;
+      
+    } catch (e) {
+      log('✗ Failed to create PeerConnection: ' + e.message, 'error');
+      return null;
+    }
+  }
+  
+  async function processBufferedIceCandidates() {
+    if (pendingIceCandidates.length === 0) {
+      log('ℹ No buffered ICE candidates to process', 'info');
+      return;
+    }
+    
+    if (!pc || !pc.remoteDescription || !pc.localDescription) {
+      log('⚠ Cannot process ICE: SDP negotiation not complete!', 'error');
+      console.error('PC state:', {
+        pc: !!pc,
+        remote: pc?.remoteDescription?.type,
+        local: pc?.localDescription?.type
+      });
+      return;
+    }
+    
+    log(`📦 Processing ${pendingIceCandidates.length} buffered ICE candidates (SDP complete)`, 'info');
+    
+    let successCount = 0;
+    let failCount = 0;
+    let nullCount = 0;
+    
+    for (const candidate of pendingIceCandidates) {
+      try {
+        if (candidate === null) {
+          await pc.addIceCandidate(null);
+          nullCount++;
+          log('✓ End-of-candidates signaled to PC', 'success');
+        } else {
+          await pc.addIceCandidate(candidate);
+          successCount++;
+          log(`✓ Buffered ICE added (${successCount}/${pendingIceCandidates.length - nullCount})`, 'success');
+        }
+      } catch (e) {
+        if (candidate === null && e.message.includes('null')) {
+          log('ℹ Browser does not support null candidate signal (OK)', 'info');
+        } else {
+          failCount++;
+          log(`⚠ Failed to add buffered ICE (${failCount}): ${e.message}`, 'warning');
+          console.error('Buffered ICE error:', e, 'Candidate:', candidate);
+        }
+      }
+    }
+    
+    log(`📊 ICE Processing Complete: ${successCount} candidates, ${nullCount} end-signal, ${failCount} failed`, 'info');
+    pendingIceCandidates = [];
+  }
+  
+  function cleanup() {
+    if (cleanupInProgress) {
+      log('⚠ Cleanup already in progress, skipping...', 'warning');
+      return;
+    }
+    
+    cleanupInProgress = true;
+    hideLoading();
+    log('🧹 Cleaning up viewer...', 'info');
+    hideBusyScreen();
+    updateConnectionBadge(false);
+    
+    // NEW: Clear WebSocket connection timeout
+    if (wsConnectionTimeout) {
+      clearTimeout(wsConnectionTimeout);
+      wsConnectionTimeout = null;
+      log('✓ WebSocket connection timeout cleared', 'success');
+    }
+    
+    if (connectionTimeout) {
+      clearTimeout(connectionTimeout);
+      connectionTimeout = null;
+      log('✓ Connection timeout cleared', 'success');
+    }
+    
+    isConnecting = false;
+    isConnected = false;
+    
+    if (pc) {
+      try { 
+        pc.ontrack = null;
+        pc.onicecandidate = null;
+        pc.onconnectionstatechange = null;
+        pc.oniceconnectionstatechange = null;
+        pc.onicegatheringstatechange = null;
+        pc.close();
+        log('✓ PeerConnection closed', 'success');
+      } catch (e) {
+        log('⚠ Error closing PeerConnection: ' + e.message, 'warning');
+      }
+      pc = null;
+    }
+    
+    if (remoteStream) {
+      try {
+        remoteStream.getTracks().forEach(track => {
+          track.onended = null;
+          track.onmute = null;
+          track.onunmute = null;
+          track.stop();
+          remoteStream.removeTrack(track);
+        });
+        log('✓ Remote stream stopped', 'success');
+      } catch (e) {
+        log('⚠ Error stopping stream: ' + e.message, 'warning');
+      }
+      remoteStream = null;
+    }
+    
+    if (statsInterval) {
+      clearInterval(statsInterval);
+      statsInterval = null;
+      log('✓ Stats interval cleared', 'success');
+    }
+    
+    $statCodec.textContent = '—';
+    $statAudioCodec.textContent = '—';
+    $statResolution.textContent = '—';
+    $statFps.textContent = '—';
+    $statBitrate.textContent = '—';
+    $statAudioBitrate.textContent = '—';
+    $statType.textContent = '—';
+    $statDataReceived.textContent = '0 MB';
+    $statPacketsLost.textContent = '0';
+    $statJitter.textContent = '0 ms';
+    $statJitterBuffer.textContent = '— ms';
+    $statNackCount.textContent = '0';
+    $statRetransmitted.textContent = '0';
+    $statLossRate.textContent = '0.00%';
+    $statRTT.textContent = '0 ms';
+    
+    window.lastBytesReceived = null;
+    window.lastTimestamp = null;
+    window.lastAudioBytesReceived = null;
+    window.lastAudioTimestamp = null;
+    
+    window.baselinePacketsLost = null;
+    window.baselinePacketsReceived = null;
+    window.statsReady = false;
+    window.lastNackCount = undefined;
+    window.lastRetransmittedCount = undefined;
+    
+    pendingIceCandidates = [];
+    remoteDescriptionSet = false;
+    sdpNegotiationComplete = false;
+    
+    try { 
+      $video.pause();
+      $video.srcObject = null;
+      $video.load();
+      
+      $video.onloadedmetadata = null;
+      $video.onloadeddata = null;
+      $video.oncanplay = null;
+      $video.onplay = null;
+      $video.onpause = null;
+      $video.onerror = null;
+      
+      log('✓ Video element cleared and reset', 'success');
+    } catch (e) {
+      log('⚠ Error clearing video: ' + e.message, 'warning');
+    }
+    
+    showBlueScreen();
+    
+    if (ws) {
+      try { 
+        ws.onopen = null;
+        ws.onclose = null;
+        ws.onerror = null;
+        ws.onmessage = null;
+        ws.close();
+        log('✓ WebSocket closed', 'success');
+      } catch (e) {
+        log('⚠ Error closing WebSocket: ' + e.message, 'warning');
+      }
+      ws = null;
+    }
+    
+    cleanupInProgress = false;
+    log('✓ Cleanup completed', 'success');
+  }
+  
+  async function connectToStream() {
+    if (isSafariIOS26Plus()) {
+      log('⚠ Detected Safari on iOS 26 – WebSocket may be broken here.', 'warning');
+    }
+    
+    if (!WS_URL) {
+      log('⏳ Loading configuration before connecting...', 'info');
+      await loadWebRTCConfig();
+    }
+    
+    if (!WS_URL) {
+      log('✗ Failed to get WebSocket URL from configuration', 'error');
+      showErrorAlert('Unable to connect: Configuration loading failed');
+      return;
+    }
+    
+    showLoading('Start connecting to server...');
+    log('🎯 Connecting to stream...', 'info');
+    console.log('Using webrtcConfig:', webrtcConfig);
+    console.log('Using WS_URL:', WS_URL);
+    
+    intentionalDisconnect = false;
+    isConnecting = true;
+    isConnected = false;
+    
+    cleanup();
+    
+    try {
+      ws = new WebSocket(WS_URL);
+      log('Opening WebSocket connection...', 'info');
+      
+      // NEW: Start 5-second timeout for WebSocket connection
+      wsConnectionTimeout = setTimeout(() => {
+        if (ws && ws.readyState !== WebSocket.OPEN) {
+          log('✗ WebSocket connection timeout (5s)', 'error');
+          hideLoading();
+          showErrorAlert('Unable to connect to signaling server.\nConnection timeout after 5 seconds.\n\nPlease check:\n• Server is running\n• Network connection\n• Firewall settings');
+          
+          if (ws) {
+            ws.close();
+            ws = null;
+          }
+          
+          $btnConnect.disabled = false;
+          $btnDisconnect.disabled = true;
+          $btnShowStats.disabled = true;
+          isConnecting = false;
+        }
+      }, WS_CONNECTION_TIMEOUT_MS);
+      
+      ws.onopen = () => {
+        // NEW: Clear timeout on successful connection
+        if (wsConnectionTimeout) {
+          clearTimeout(wsConnectionTimeout);
+          wsConnectionTimeout = null;
+        }
+        
+        showLoading();
+        log('✓ WebSocket connected', 'success');
+        log('⏳ Waiting for stream offer...', 'info');
+        isConnecting = true;
+      };
+      
+      ws.onclose = (event) => {
+        // NEW: Clear timeout on close
+        if (wsConnectionTimeout) {
+          clearTimeout(wsConnectionTimeout);
+          wsConnectionTimeout = null;
+        }
+        
+        log(`WebSocket disconnected (code: ${event.code}, reason: ${event.reason || 'none'})`, 'warning');
+        
+        if (!cleanupInProgress && (isConnecting || isConnected)) {
+          clearVideo();
+          $btnConnect.disabled = false;
+          $btnDisconnect.disabled = true;
+          $btnShowStats.disabled = true;
+        }
+      };
+      
+      ws.onerror = (err) => {
+        // NEW: Clear timeout on error
+        if (wsConnectionTimeout) {
+          clearTimeout(wsConnectionTimeout);
+          wsConnectionTimeout = null;
+        }
+        
+        hideLoading();
+        log('✗ WebSocket connection error: ' + err.type, 'error');
+        log('Failed to connect to signaling server at ' + WS_URL, 'error');
+        
+        // Show error alert
+        showErrorAlert('Unable to connect to signaling server at:\n' + WS_URL + '\n\nPlease check:\n• Server is running\n• Network connection is active\n• Firewall settings allow WebSocket connections');
+        
+        $btnConnect.disabled = false;
+        $btnDisconnect.disabled = true;
+        $btnShowStats.disabled = true;
+        
+        if (!cleanupInProgress && (isConnecting || isConnected)) {
+          clearVideo();
+        }
+      };
+      
+    } catch (e) {
+      // NEW: Clear timeout on exception
+      if (wsConnectionTimeout) {
+        clearTimeout(wsConnectionTimeout);
+        wsConnectionTimeout = null;
+      }
+      
+      hideLoading();
+      log('✗ Failed to create WebSocket: ' + e.message, 'error');
+      showErrorAlert('Unable to connect: ' + e.message);
+      $btnConnect.disabled = false;
+      $btnDisconnect.disabled = true;
+      $btnShowStats.disabled = true;
+      cleanup();
+      return;
+    }
+    
+    ws.onmessage = async (ev) => {
+      let data = null;
+      try { 
+        data = JSON.parse(ev.data); 
+      } catch (e) { 
+        log('✗ Failed to parse message: ' + e.message, 'error');
+        return; 
+      }
+      
+      switch (data.type) {
+        
+        case 'status':
+          if (data.status === 'busy') {
+            showBusyScreen();
+            hideLoading();
+            if (ws) {
+              ws.close();
+              ws = null;
+            }
+            $btnConnect.disabled = false;
+            $btnDisconnect.disabled = true;
+          }
+          break;
+          
+        case 'sdp':
+          if (data.data && data.data.type === 'offer') {
+            log('✓ Offer received from server', 'success');
+            showLoading('Negotiating connection...');
+            
+            if (!pc) {
+              log('ℹ Creating PeerConnection for offer', 'info');
+              if (!setupPeerConnection()) {
+                hideLoading();
+                log('✗ Failed to setup PeerConnection', 'error');
+                return;
+              }
+            } else {
+              log('ℹ PeerConnection already exists', 'info');
+            }
+            
+            try {
+              if (data.data.sdp) {
+                parseSDPForStreamInfo(data.data.sdp);
+              }
+              
+              log('→ Setting remote description...', 'info');
+              await pc.setRemoteDescription(new RTCSessionDescription(data.data));
+              log('✓ Remote description set', 'success');
+              remoteDescriptionSet = true;
+              
+              log('→ Creating answer...', 'info');
+              const answer = await pc.createAnswer();
+              
+              await pc.setLocalDescription(answer);
+              log('✓ Local description set', 'success');
+              
+              sdpNegotiationComplete = true;
+              log(`✓ SDP negotiation complete, buffered ICE candidates: ${pendingIceCandidates.length}`, 'info');
+              
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ 
+                  type: 'sdp', 
+                  data: answer
+                }));
+                log('→ Answer sent to server', 'info');
+              }
+              
+              showLoading('Processing ICE candidates...');
+              await processBufferedIceCandidates();
+              showLoading('Waiting for ICE connectivity...');
+              
+            } catch (e) {
+              hideLoading();
+              log('✗ Negotiation error: ' + e.message, 'error');
+              console.error('Full negotiation error:', e);
+              
+              if (e.message.includes('InvalidStateError')) {
+                log('💡 Try refreshing the page and reconnecting', 'info');
+              } else if (e.message.includes('OperationError')) {
+                log('💡 This may be a codec compatibility issue', 'info');
+              }
+            }
+          }
+          break;
+          
+        case 'ice':
+          if (data.data) {
+            if (!data.data.candidate) {
+              log('✓ End of ICE candidates signal received from server', 'info');
+              pendingIceCandidates.push(null);
+              log(`📦 Buffered end-of-candidates signal, total queue: ${pendingIceCandidates.length}`, 'info');
+              
+              if (sdpNegotiationComplete && pc) {
+                processBufferedIceCandidates().catch(e => log('⚠ ICE processing error: ' + e.message, 'warning'));
+              }
+              break;
+            }
+            
+            const candidate = new RTCIceCandidate({
+              candidate: data.data.candidate,
+              sdpMLineIndex: data.data.sdpMLineIndex,
+              sdpMid: data.data.sdpMid
+            });
+            
+            pendingIceCandidates.push(candidate);
+            log(`📦 ICE candidate buffered (queue: ${pendingIceCandidates.length})`, 'info');
+            
+            if (sdpNegotiationComplete && pc) {
+              processBufferedIceCandidates().catch(e => log('⚠ ICE processing error: ' + e.message, 'warning'));
+            }
+          }
+          break;
+      }
+    };
+  }
+
+  function isSafariIOS26Plus() {
+    const ua = navigator.userAgent || "";
+    const isIOS = /iPhone|iPad|iPod/.test(ua);
+    const isSafari = /Safari/.test(ua) && !/CriOS|Chrome|EdgiOS|OPiOS|FxiOS/.test(ua);
+    const is26OrLater = /OS 26[_\.\s]/.test(ua) || /Version\/26\./.test(ua);
+    return isIOS && isSafari && is26OrLater;
+  }
+
+  function detectCodecSupport() {
+    log('🔍 Detecting codec support...', 'info');
+    
+    try {
+      if (!RTCRtpReceiver.getCapabilities) {
+        log('⚠ RTCRtpReceiver.getCapabilities not supported', 'warning');
+        updateCodecBadge($codecBadgeH264, 'unknown', 'H.264', 'Unknown');
+        updateCodecBadge($codecBadgeH265, 'unknown', 'H.265', 'Unknown');
+        return;
+      }
+      
+      const capabilities = RTCRtpReceiver.getCapabilities('video');
+      
+      if (!capabilities || !capabilities.codecs) {
+        log('⚠ Could not retrieve video codecs', 'warning');
+        updateCodecBadge($codecBadgeH264, 'unknown', 'H.264', 'Unknown');
+        updateCodecBadge($codecBadgeH265, 'unknown', 'H.265', 'Unknown');
+        return;
+      }
+      
+      const h264Supported = capabilities.codecs.some(codec => {
+        const mimeType = codec.mimeType.toLowerCase();
+        return mimeType.includes('h264') || mimeType.includes('avc');
+      });
+      
+      const h265Supported = capabilities.codecs.some(codec => {
+        const mimeType = codec.mimeType.toLowerCase();
+        return mimeType.includes('h265') || mimeType.includes('hevc');
+      });
+      
+      if (h264Supported) {
+        updateCodecBadge($codecBadgeH264, 'supported', 'H.264', 'Supported');
+        log('✓ H.264 codec supported', 'success');
+      } else {
+        updateCodecBadge($codecBadgeH264, 'not-supported', 'H.264', 'Not Supported');
+        log('✗ H.264 codec not supported', 'error');
+      }
+      
+      if (h265Supported) {
+        updateCodecBadge($codecBadgeH265, 'supported', 'H.265', 'Supported');
+        log('✓ H.265 codec supported', 'success');
+      } else {
+        updateCodecBadge($codecBadgeH265, 'not-supported', 'H.265', 'Not Supported');
+        log('✗ H.265 codec not supported', 'warning');
+      }
+      
+      console.log('Available video codecs:', capabilities.codecs.map(c => c.mimeType));
+      
+    } catch (e) {
+      log('✗ Error detecting codecs: ' + e.message, 'error');
+      updateCodecBadge($codecBadgeH264, 'unknown', 'H.264', 'Unknown');
+      updateCodecBadge($codecBadgeH265, 'unknown', 'H.265', 'Unknown');
+    }
+  }
+  
+  // Modify the updateCodecBadge function
+  function updateCodecBadge(badgeElement, status, codecName, statusText) {
+    if (!badgeElement) return;
+    
+    const t = translations[currentLang];
+    
+    badgeElement.classList.remove('codec-badge-checking', 'codec-badge-supported', 
+                                  'codec-badge-not-supported', 'codec-badge-unknown');
+    
+    let translatedStatus = statusText;
+    if (status === 'supported') {
+      badgeElement.classList.add('codec-badge-supported');
+      badgeElement.querySelector('.codec-icon').textContent = '✓';
+      translatedStatus = t.codecSupported;
+    } else if (status === 'not-supported') {
+      badgeElement.classList.add('codec-badge-not-supported');
+      badgeElement.querySelector('.codec-icon').textContent = '✗';
+      translatedStatus = t.codecNotSupported;
+    } else if (status === 'checking') {
+      badgeElement.classList.add('codec-badge-checking');
+      badgeElement.querySelector('.codec-icon').textContent = '⏳';
+      translatedStatus = t.codecChecking;
+    } else {
+      badgeElement.classList.add('codec-badge-unknown');
+      badgeElement.querySelector('.codec-icon').textContent = '❓';
+      translatedStatus = t.codecUnknown;
+    }
+    
+    badgeElement.querySelector('.codec-status').textContent = translatedStatus;
+  }
+  
+  // ============================================================================
+  // Load WebRTC Configuration
+  // ============================================================================
+  // Modify the loadWebRTCConfig function to include language loading
+  async function loadWebRTCConfig() {
+    try {
+      const response = await fetch(`${API_BASE}/config`);
+      if (response.ok) {
+        const config = await response.json();
+        webrtcConfig.turn_url = config.turn_url || '';
+        webrtcConfig.stun_url = config.stun_url || '';
+        
+        const serverPort = config.server_port || 8081;
+        WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + 
+                location.hostname + ':' + serverPort + '/ws';
+        
+        // NEW: Load language from config
+        currentLang = config.lang || 'en';
+        if (!translations[currentLang]) {
+          currentLang = 'en'; // Fallback to English if invalid
+        }
+        
+        // Apply translations
+        applyTranslations(currentLang);
+        
+        // Update language toggle UI
+        $langLabel.textContent = currentLang.toUpperCase();
+        localStorage.setItem('language', currentLang);
+        
+        log('✓ WebRTC configuration loaded', 'success');
+        log('Language: ' + currentLang.toUpperCase(), 'info');
+        log('WebSocket URL: ' + WS_URL, 'info');
+      }
+    } catch (e) {
+      const defaultPort = 8081;
+      WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + 
+              location.hostname + ':' + defaultPort + '/ws';
+      currentLang = 'en';
+      applyTranslations(currentLang);
+      log('⚠ Could not load WebRTC config, using defaults', 'warning');
+      log('WebSocket URL (default): ' + WS_URL, 'info');
+    }
+  }
+
+  // ============================================================================
+  // Fullscreen Functionality
+  // ============================================================================
+  let lastClickTime = 0;
+  const DOUBLE_CLICK_DELAY = 300; // milliseconds
+  
+  function toggleFullscreen() {
+    if (!document.fullscreenElement && 
+        !document.webkitFullscreenElement && 
+        !document.mozFullScreenElement && 
+        !document.msFullscreenElement) {
+      // Enter fullscreen
+      if ($videoContainer.requestFullscreen) {
+        $videoContainer.requestFullscreen();
+      } else if ($videoContainer.webkitRequestFullscreen) {
+        $videoContainer.webkitRequestFullscreen();
+      } else if ($videoContainer.mozRequestFullScreen) {
+        $videoContainer.mozRequestFullScreen();
+      } else if ($videoContainer.msRequestFullscreen) {
+        $videoContainer.msRequestFullscreen();
+      }
+      log('📺 Entered fullscreen mode', 'info');
+    } else {
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+      log('📺 Exited fullscreen mode', 'info');
+    }
+  }
+  
+  // Double-click handler for video container
+  $videoContainer.addEventListener('click', (e) => {
+    // Ignore clicks on buttons and controls
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+      return;
+    }
+    
+    const currentTime = new Date().getTime();
+    const timeDiff = currentTime - lastClickTime;
+    
+    if (timeDiff < DOUBLE_CLICK_DELAY && timeDiff > 0) {
+      // Double click detected
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      // Save video state before fullscreen transition
+      const wasPlaying = !$video.paused;
+      
+      toggleFullscreen();
+      
+      // Ensure video continues playing after fullscreen toggle
+      if (wasPlaying) {
+        setTimeout(() => {
+          if ($video.paused) {
+            $video.play().catch(err => {
+              console.log('Auto-resume after fullscreen failed:', err);
+            });
+          }
+        }, 100);
+      }
+      
+      lastClickTime = 0; // Reset to prevent triple-click triggering
+    } else {
+      // Single click
+      lastClickTime = currentTime;
+    }
+  });
+  
+  // Prevent video element from handling double-clicks (prevents pause/play toggle)
+  $video.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  
+  // Listen for fullscreen change events
+  document.addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement) {
+      log('✓ Fullscreen activated', 'success');
+      // Ensure video continues playing in fullscreen
+      if ($video.paused && remoteStream && remoteStream.active) {
+        $video.play().catch(err => console.log('Play after fullscreen enter failed:', err));
+      }
+    } else {
+      log('✓ Fullscreen deactivated', 'success');
+      // Ensure video continues playing after exiting fullscreen
+      if ($video.paused && remoteStream && remoteStream.active) {
+        $video.play().catch(err => console.log('Play after fullscreen exit failed:', err));
+      }
+    }
+  });
+  
+  document.addEventListener('webkitfullscreenchange', () => {
+    if (document.webkitFullscreenElement) {
+      log('✓ Fullscreen activated (webkit)', 'success');
+      // Ensure video continues playing in fullscreen
+      if ($video.paused && remoteStream && remoteStream.active) {
+        $video.play().catch(err => console.log('Play after fullscreen enter failed:', err));
+      }
+    } else {
+      log('✓ Fullscreen deactivated (webkit)', 'success');
+      // Ensure video continues playing after exiting fullscreen
+      if ($video.paused && remoteStream && remoteStream.active) {
+        $video.play().catch(err => console.log('Play after fullscreen exit failed:', err));
+      }
+    }
+  });
+
+  // ============================================================================
+  // Event Listeners
+  // ============================================================================
+  
+  if ($btnGoBack) {
+    $btnGoBack.addEventListener('click', () => {
+      log('Going back...', 'info');
+      intentionalDisconnect = true;
+      cleanup();
+      $btnConnect.disabled = false;
+      $btnDisconnect.disabled = true;
+      $btnShowStats.disabled = true;
+    });
+  }
+  
+  $btnConnect.addEventListener('click', () => {
+    $btnConnect.disabled = true;
+    $btnDisconnect.disabled = true;
+    intentionalDisconnect = false;
+    connectToStream();
+  });
+  
+  $btnDisconnect.addEventListener('click', () => {
+    intentionalDisconnect = true;
+    cleanup();
+    $btnConnect.disabled = false;
+    $btnDisconnect.disabled = true;
+    $btnShowStats.disabled = true;
+  });
+  
+  // Stats Modal
+  $btnShowStats.addEventListener('click', () => {
+    $statsModal.classList.add('active');
+  });
+  
+  $closeStats.addEventListener('click', () => {
+    $statsModal.classList.remove('active');
+  });
+  
+  $statsModal.addEventListener('click', (e) => {
+    if (e.target === $statsModal) {
+      $statsModal.classList.remove('active');
+    }
+  });
+  
+  // Console Modal
+  $btnShowConsole.addEventListener('click', () => {
+    $consoleModal.classList.add('active');
+    // Scroll to bottom to show latest messages
+    setTimeout(() => {
+      $logContainer.scrollTop = $logContainer.scrollHeight;
+    }, 50);
+  });
+  
+  $closeConsole.addEventListener('click', () => {
+    $consoleModal.classList.remove('active');
+  });
+  
+  $consoleModal.addEventListener('click', (e) => {
+    if (e.target === $consoleModal) {
+      $consoleModal.classList.remove('active');
+    }
+  });
+  
+  // Close modals with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      $statsModal.classList.remove('active');
+      $consoleModal.classList.remove('active');
+    }
+  });
+  
+  // ============================================================================
+  // Debug Helper Functions
+  // ============================================================================
+  
+  window.debugVideo = function() {
+    console.log('=== VIDEO DEBUG INFO ===');
+    console.log('Video Element:', {
+      srcObject: !!$video.srcObject,
+      videoWidth: $video.videoWidth,
+      videoHeight: $video.videoHeight,
+      readyState: $video.readyState,
+      paused: $video.paused,
+      currentTime: $video.currentTime,
+      duration: $video.duration,
+      muted: $video.muted,
+      volume: $video.volume
+    });
+    
+    if ($video.srcObject) {
+      console.log('Media Stream:', {
+        id: $video.srcObject.id,
+        active: $video.srcObject.active,
+        tracks: $video.srcObject.getTracks().map(t => ({
+          kind: t.kind,
+          id: t.id,
+          readyState: t.readyState,
+          enabled: t.enabled,
+          muted: t.muted
+        }))
+      });
+    }
+    
+    console.log('Overlays:', {
+      blueScreen: {
+        class: document.getElementById('blueScreen').className,
+        display: window.getComputedStyle(document.getElementById('blueScreen')).display
+      },
+      loading: {
+        class: document.getElementById('loadingOverlay').className,
+        display: window.getComputedStyle(document.getElementById('loadingOverlay')).display
+      }
+    });
+    
+    if (pc) {
+      console.log('PeerConnection:', {
+        connectionState: pc.connectionState,
+        iceConnectionState: pc.iceConnectionState,
+        iceGatheringState: pc.iceGatheringState,
+        signalingState: pc.signalingState,
+        hasRemoteDescription: !!pc.remoteDescription,
+        hasLocalDescription: !!pc.localDescription
+      });
+    }
+  };
+  
+  window.forceVideoVisible = function() {
+    console.log('Forcing video visibility...');
+    document.getElementById('blueScreen').style.display = 'none';
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('busyScreen').style.display = 'none';
+    $video.style.display = 'block';
+    $video.style.visibility = 'visible';
+    $video.style.opacity = '1';
+    $video.style.zIndex = '100';
+    console.log('Video forced visible. Can you see it now?');
+  };
+  
+  window.checkVideoRendering = function() {
+    if ($video.videoWidth === 0 || $video.videoHeight === 0) {
+      console.error('❌ Video dimensions are 0x0 - frames NOT rendering!');
+      console.log('Possible causes:');
+      console.log('1. Codec not supported by browser');
+      console.log('2. Video decoder failure');
+      console.log('3. Hardware acceleration issue');
+      console.log('4. Track muted or disabled');
+      return false;
+    } else {
+      console.log(`✓ Video rendering: ${$video.videoWidth}x${$video.videoHeight}`);
+      return true;
+    }
+  };
+  
+  window.getPC = () => pc;
+  window.getVideo = () => $video;
+  window.getStream = () => remoteStream;
+  
+  console.log('Debug helpers available:');
+  console.log('  debugVideo() - Show video element info');
+  console.log('  forceVideoVisible() - Force video visible');
+  console.log('  checkVideoRendering() - Check if frames rendering');
+  console.log('  getPC() - Get PeerConnection object');
+  console.log('  getVideo() - Get video element');
+  console.log('  getStream() - Get MediaStream');
+  
+  const userAgent = navigator.userAgent;
+  const isIOSSafari = /iP(ad|od|hone)/i.test(userAgent) && /WebKit/i.test(userAgent);
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  
+  log('📡 Control Panel Ready', 'success');
+  console.log("User Agent: ", userAgent);
+  
+  if (isIOSSafari) {
+    const iOSVersion = userAgent.match(/OS (\d+)_/);
+    if (iOSVersion) {
+      log('📱 iOS ' + iOSVersion[1] + ' detected', 'info');
+    } else {
+      log('📱 iOS Safari detected', 'info');
+    }
+  } else if (isMobile) {
+    log('📱 Mobile browser detected', 'info');
+  }
+  
+  if (!window.RTCPeerConnection) {
+    log('❌ WebRTC not supported in this browser!', 'error');
+  } else {
+    log('✓ WebRTC supported', 'success');
+  }
+  
+  detectCodecSupport();
+  
+  // Load LTE mode preference
+  const savedLTEMode = localStorage.getItem('lteMode') === 'true';
+  if ($lteMode) {
+    $lteMode.checked = savedLTEMode;
+    
+    // Save LTE mode preference when changed
+    $lteMode.addEventListener('change', () => {
+      localStorage.setItem('lteMode', $lteMode.checked);
+      log(`📡 LTE Mode ${$lteMode.checked ? 'enabled' : 'disabled'} - will apply on next connection`, 'info');
+    });
+  }
+  
+  if (isIOSSafari && location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    log('⚠️ WARNING: iOS requires HTTPS for WebRTC!', 'warning');
+    log('💡 Try accessing via HTTPS or use localhost', 'info');
+  }
+  
+  showBlueScreen();
+  
+  loadWebRTCConfig();
+  
+})();
+
+</script>
+</body>
+</html>
